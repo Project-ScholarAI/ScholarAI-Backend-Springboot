@@ -1,0 +1,40 @@
+{
+  "info": {
+    "name": "ScholarAI Test Controller",
+    "_postman_id": "2a6e899b-20a5-4a55-bfc2-e327457ebdd6",
+    "description": "Endpoints for testing the ScholarAI backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Hello Endpoint",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/test/hello",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "test", "hello"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Test Endpoint",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/test/test",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "test", "test"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
