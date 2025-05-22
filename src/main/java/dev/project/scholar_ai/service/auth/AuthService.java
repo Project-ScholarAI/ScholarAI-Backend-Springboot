@@ -4,9 +4,7 @@ import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.auth.AuthUser;
 import dev.project.scholar_ai.repository.auth.AuthUserRepository;
 import dev.project.scholar_ai.security.JwtUtils;
-import dev.project.scholar_ai.supabase.SupabaseAdminClient;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,14 +20,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final SupabaseAdminClient supabaseAdminClient;
     private final AuthUserRepository authUserRepository;
     private final UserLoadingService userLoadingService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
     public void registerUser(String email, String password) {
-        supabaseAdminClient.createUser(email, password);
+        if (authUserRepository.findByEmail(email).isPresent()) {
+            throw new BadCredentialsException("User with email " + email + " already exists.");
+        }
+        AuthUser newUser = new AuthUser();
+        newUser.setEmail(email);
+        newUser.setEncryptedPassword(passwordEncoder.encode(password));
+        newUser.setRole("USER"); // Default role
+        authUserRepository.save(newUser);
     }
 
     public Authentication authentication(String email, String password) {
@@ -60,9 +64,5 @@ public class AuthService {
                 .toList();
         AuthResponse loginResponse = new AuthResponse(jwtToken, userDetails.getUsername(), loggedUser.getId(), roles);
         return ResponseEntity.ok(loginResponse);
-    }
-
-    public Optional<AuthUser> getUserByEmail(String email) {
-        return authUserRepository.findByEmail(email);
     }
 }

@@ -9,7 +9,7 @@ NC='\033[0m'
 
 ROOT_DIR="$(dirname "$0")/.."
 DOCKER_APP="$ROOT_DIR/docker/docker-app.yml"
-DOCKER_SERVICES="$ROOT_DIR/docker/docker-services.yml"
+DOCKER_SERVICES="$ROOT_DIR/docker/core-service.yml"
 
 # Build image
 build_docker() {
@@ -21,23 +21,50 @@ build_docker() {
 }
 
 # Start/Stop services
-start_services() { docker compose -f "$DOCKER_SERVICES" up -d; }
-stop_services() { docker compose -f "$DOCKER_SERVICES" down; }
+start_services() {
+    echo -e "${CYAN}Starting core services...${NC}"
+    docker compose -f "$DOCKER_SERVICES" up -d
+    echo -e "${GREEN}Core services started.${NC}"
+    echo -e "${GREEN}RabbitMQ management UI should be available at http://localhost:15672 ${NC}"
+}
+stop_services() {
+    echo -e "${CYAN}Stopping core services...${NC}"
+    docker compose -f "$DOCKER_SERVICES" down
+    echo -e "${GREEN}Core services stopped.${NC}"
+}
 
-start_app() { docker compose -f "$DOCKER_APP" up -d; }
-stop_app() { docker compose -f "$DOCKER_APP" down; }
+start_app() {
+    echo -e "${CYAN}Starting application...${NC}"
+    docker compose -f "$DOCKER_APP" up -d
+    echo -e "${GREEN}Application started. You can typically access it at http://localhost:8000 (please verify the port).${NC}"
+}
+stop_app() {
+    echo -e "${CYAN}Stopping application...${NC}"
+    docker compose -f "$DOCKER_APP" down
+    echo -e "${GREEN}Application stopped.${NC}"
+}
 
 rebuild_all() {
+    echo -e "${YELLOW}Starting full rebuild process...${NC}"
     stop_app && stop_services
     build_docker
     start_services && start_app
+    echo -e "${GREEN}Full rebuild process completed.${NC}"
 }
 
 rebuild_nocache() {
-    docker compose -f "$DOCKER_SERVICES" build --no-cache &&
-    docker compose -f "$DOCKER_APP" build --no-cache &&
-    start_services &&
+    echo -e "${YELLOW}Starting rebuild process with no cache...${NC}"
+    echo -e "${CYAN}Rebuilding core services (no-cache)...${NC}"
+    docker compose -f "$DOCKER_SERVICES" build --no-cache || { echo -e "${RED}Core services rebuild (no-cache) failed.${NC}"; exit 1; }
+    echo -e "${GREEN}Core services rebuilt successfully (no-cache).${NC}"
+
+    echo -e "${CYAN}Rebuilding application (no-cache)...${NC}"
+    docker compose -f "$DOCKER_APP" build --no-cache || { echo -e "${RED}Application rebuild (no-cache) failed.${NC}"; exit 1; }
+    echo -e "${GREEN}Application rebuilt successfully (no-cache).${NC}"
+
+    start_services && \
     start_app
+    echo -e "${GREEN}Rebuild process with no cache completed.${NC}"
 }
 
 case "$1" in
