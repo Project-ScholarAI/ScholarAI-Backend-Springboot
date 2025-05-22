@@ -16,6 +16,14 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Filter for authenticating users based on JWT tokens in the Authorization
+ * header.
+ * This filter intercepts incoming requests, extracts and validates the JWT
+ * token,
+ * and sets the authentication in the Spring Security context if the token is
+ * valid.
+ */
 @Component
 @RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
@@ -24,6 +32,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final UserLoadingService userLoadingService;
     private static final Logger log = LoggerFactory.getLogger(AuthTokenFilter.class);
 
+    /**
+     * Performs the filtering logic for each request.
+     * It extracts the JWT from the request, validates it, and if valid,
+     * loads the user details and sets the authentication in the security context.
+     *
+     * @param request     The HTTP servlet request.
+     * @param response    The HTTP servlet response.
+     * @param filterChain The filter chain.
+     * @throws ServletException If a servlet-specific error occurs.
+     * @throws IOException      If an I/O error occurs.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -51,6 +70,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Parses the JWT token from the Authorization header of the request.
+     *
+     * @param request The HTTP servlet request.
+     * @return The JWT token string, or null if not found or not correctly
+     *         formatted.
+     */
     private String parseJwt(HttpServletRequest request) {
         String jwt = jwtUtils.getJwtFromHeader(request);
         log.debug("AuthTokenFilter.java: {}", jwt);
