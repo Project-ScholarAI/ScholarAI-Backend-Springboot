@@ -49,9 +49,11 @@ public class SecurityConfig {
                         "/api/test/test",
                         "/api/v1/auth/login",
                         "/api/v1/auth/register",
+                        "/api/demo/**",
                         "/actuator/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
+                        "/docs",
                         "/v3/api-docs/**")
                 .permitAll()
                 .anyRequest()
@@ -60,7 +62,8 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
         http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**")); // Only disable CSRF for API endpoints
+        http.csrf(csrf ->
+                csrf.ignoringRequestMatchers("/api/v1/**", "/api/demo/**")); // Disable CSRF for API and demo endpoints
 
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

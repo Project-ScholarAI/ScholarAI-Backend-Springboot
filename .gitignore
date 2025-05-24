@@ -43,4 +43,8 @@ build/
 # Docker
 docker/.env
 docker/.env.*
-!docker/.env.example
+docker/.env.example
+docker/.env.example.*
+
+docs/
+docs/*

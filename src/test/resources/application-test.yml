@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: scholar-ai-test
+  
+  # Use H2 in-memory database for tests
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        globally_quoted_identifiers: true
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+  
+  h2:
+    console:
+      enabled: true
+
+  # RabbitMQ configuration for tests - using the same Docker instance
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+
+  security:
+    user:
+      name: ${USER_NAME:test_user}
+      password: ${USER_PASSWORD:test_password}
+
+  app:
+    jwtSecret: ${JWT_SECRET:test_jwt_secret_for_testing_only}
+    jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}
+
+server:
+  port: 0  # Random port for tests
+
+# Disable management endpoints for tests
+management:
+  endpoints:
+    enabled-by-default: false
+
+# Test-specific logging
+logging:
+  level:
+    dev.project.scholar_ai: DEBUG
+    org.springframework.amqp: WARN
+    org.springframework.rabbit: WARN
+
+# Test-specific RabbitMQ configuration
+scholarai:
+  rabbitmq:
+    exchange: scholarai.test.exchange
+    paper-fetch:
+      queue: scholarai.test.paper.fetch.queue
+      routing-key: scholarai.test.paper.fetch
+      completed-queue: scholarai.test.paper.fetch.completed.queue
+      completed-routing-key: scholarai.test.paper.fetch.completed
+    summarization:
+      queue: scholarai.test.summarization.queue
+      routing-key: scholarai.test.summarization
+      completed-queue: scholarai.test.summarization.completed.queue
+      completed-routing-key: scholarai.test.summarization.completed
+    gap-analysis:
+      queue: scholarai.test.gap.queue
+      routing-key: scholarai.test.gap
+      completed-queue: scholarai.test.gap.completed.queue
+      completed-routing-key: scholarai.test.gap.completed 
