@@ -16,9 +16,6 @@ public class PaperFetchRequestSender {
     }
 
     public void send(PaperFetchRequest req) {
-        rt.convertAndSend(
-                rabbitMQConfig.getExchangeName(),
-                rabbitMQConfig.getPaperFetchRoutingKey(),
-                req);
+        rt.convertAndSend(rabbitMQConfig.getExchangeName(), rabbitMQConfig.getPaperFetchRoutingKey(), req);
     }
 }

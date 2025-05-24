@@ -16,9 +16,6 @@ public class GapAnalysisRequestSender {
     }
 
     public void send(GapAnalysisRequest req) {
-        rt.convertAndSend(
-                rabbitMQConfig.getExchangeName(),
-                rabbitMQConfig.getGapAnalysisRoutingKey(),
-                req);
+        rt.convertAndSend(rabbitMQConfig.getExchangeName(), rabbitMQConfig.getGapAnalysisRoutingKey(), req);
     }
 }
