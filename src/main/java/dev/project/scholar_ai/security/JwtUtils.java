@@ -1,9 +1,6 @@
 package dev.project.scholar_ai.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,8 +25,12 @@ public class JwtUtils {
     @Value("${spring.app.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${spring.app.jwtExpirationMs}")
-    private int jwtExpirationMs;
+    @Value("${spring.app.accessTokenValidityMs}")
+    private long accessTokenValidityMs;
+
+    @Value("${spring.app.refreshTokenValidityMs}")
+    private long refreshTokenValidityMs;
+
 
     /**
      * Extracts the JWT token from the Authorization header of an HTTP request.
@@ -53,15 +54,30 @@ public class JwtUtils {
      * @param userDetails The user details for whom the token is to be generated.
      * @return A JWT token string.
      */
-    public String generateTokenFromUsername(UserDetails userDetails) {
-        String username = userDetails.getUsername();
-        return Jwts.builder()
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(key())
+
+    public String generateAccessToken(UserDetails userDetails)
+    {
+        return generateToken(userDetails.getUsername(), accessTokenValidityMs);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails)
+    {
+        return generateToken(userDetails.getUsername(), refreshTokenValidityMs);
+    }
+
+    public String generateToken(String username, long expirationMilis)
+    {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationMilis);
+
+        return  Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, jwtSecret)
                 .compact();
     }
+
 
     /**
      * Extracts the username from a JWT token.
