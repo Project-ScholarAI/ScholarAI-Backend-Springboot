@@ -7,7 +7,10 @@ spring:
       password: ${USER_PASSWORD:your_password_here}
   app:
     jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
-    jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}
+    access:
+      expiration-ms: 900000 #15min
+    refresh:
+      expiration-ms: 604800000 #7day
 
   datasource:
     url: jdbc:postgresql://localhost:5433/coreDB
@@ -35,6 +38,11 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+
+  redis:
+    host: core-redis
+    port: 6379
+    password: ${REDIS_PASSWORD}
 
 server:
   port: 8080

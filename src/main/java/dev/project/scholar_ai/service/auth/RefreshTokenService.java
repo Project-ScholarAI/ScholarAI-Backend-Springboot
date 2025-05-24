@@ -11,7 +11,7 @@ public class RefreshTokenService {
     private static final String REDIS_REFRESH_TOKEN_PREFIX = "refresh_token";
     private final RedisTemplate<String, String>redisTemplate;
 
-    @Value("${spring.app.refreshTokenValidityMs}")
+    @Value("${spring.app.refresh.expiration-ms}")
     private long refreshTokenValidityMs;
 
     public RefreshTokenService(RedisTemplate<String, String> redisTemplate) {

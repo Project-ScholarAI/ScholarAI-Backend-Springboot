@@ -10,7 +10,6 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,10 +24,10 @@ public class JwtUtils {
     @Value("${spring.app.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${spring.app.accessTokenValidityMs}")
+    @Value("${spring.app.access.expiration-ms}")
     private long accessTokenValidityMs;
 
-    @Value("${spring.app.refreshTokenValidityMs}")
+    @Value("${spring.app.refresh.expiration-ms}")
     private long refreshTokenValidityMs;
 
 
@@ -50,8 +49,6 @@ public class JwtUtils {
 
     /**
      * Generates a JWT token for the given user details.
-     *
-     * @param userDetails The user details for whom the token is to be generated.
      * @return A JWT token string.
      */
 
