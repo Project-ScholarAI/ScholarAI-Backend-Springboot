@@ -16,9 +16,6 @@ public class SummarizationRequestSender {
     }
 
     public void send(SummarizationRequest req) {
-        rt.convertAndSend(
-                rabbitMQConfig.getExchangeName(),
-                rabbitMQConfig.getSummarizationRoutingKey(),
-                req);
+        rt.convertAndSend(rabbitMQConfig.getExchangeName(), rabbitMQConfig.getSummarizationRoutingKey(), req);
     }
 }

@@ -19,7 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
      * or defaults to "http://localhost:3000,
      * https://*.github.dev,https://twiggle.tech,https://*.vercel.app".
      */
-    @Value("${cors.allowed-origins:http://localhost:3000, https://*.github.dev,https://twiggle.tech,https://*.vercel.app}")
+    @Value(
+            "${cors.allowed-origins:http://localhost:3000, https://*.github.dev,https://twiggle.tech,https://*.vercel.app}")
     private String[] allowedOrigins;
 
     /**

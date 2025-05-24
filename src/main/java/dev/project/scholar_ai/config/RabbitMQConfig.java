@@ -68,9 +68,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public TopicExchange appExchange() {
-        return ExchangeBuilder.topicExchange(exchangeName)
-                .durable(true)
-                .build();
+        return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
     }
 
     /**
@@ -144,9 +142,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindPaperFetch(Queue paperFetchQueue, TopicExchange appExchange) {
-        return BindingBuilder.bind(paperFetchQueue)
-                .to(appExchange)
-                .with(paperFetchRoutingKey);
+        return BindingBuilder.bind(paperFetchQueue).to(appExchange).with(paperFetchRoutingKey);
     }
 
     /**
@@ -159,9 +155,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindSummarization(Queue summarizationQueue, TopicExchange appExchange) {
-        return BindingBuilder.bind(summarizationQueue)
-                .to(appExchange)
-                .with(summarizationRoutingKey);
+        return BindingBuilder.bind(summarizationQueue).to(appExchange).with(summarizationRoutingKey);
     }
 
     /**
@@ -174,9 +168,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindGapAnalysis(Queue gapAnalysisQueue, TopicExchange appExchange) {
-        return BindingBuilder.bind(gapAnalysisQueue)
-                .to(appExchange)
-                .with(gapAnalysisRoutingKey);
+        return BindingBuilder.bind(gapAnalysisQueue).to(appExchange).with(gapAnalysisRoutingKey);
     }
 
     /**
@@ -189,10 +181,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindPaperFetchCompleted(Queue paperFetchCompletedQueue, TopicExchange appExchange) {
-        return BindingBuilder
-                .bind(paperFetchCompletedQueue)
-                .to(appExchange)
-                .with(paperFetchCompletedRoutingKey);
+        return BindingBuilder.bind(paperFetchCompletedQueue).to(appExchange).with(paperFetchCompletedRoutingKey);
     }
 
     /**
@@ -206,10 +195,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindSummarizationCompleted(Queue summarizationCompletedQueue, TopicExchange appExchange) {
-        return BindingBuilder
-                .bind(summarizationCompletedQueue)
-                .to(appExchange)
-                .with(summarizationCompletedRoutingKey);
+        return BindingBuilder.bind(summarizationCompletedQueue).to(appExchange).with(summarizationCompletedRoutingKey);
     }
 
     /**
@@ -222,10 +208,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public Binding bindGapAnalysisCompleted(Queue gapAnalysisCompletedQueue, TopicExchange appExchange) {
-        return BindingBuilder
-                .bind(gapAnalysisCompletedQueue)
-                .to(appExchange)
-                .with(gapAnalysisCompletedRoutingKey);
+        return BindingBuilder.bind(gapAnalysisCompletedQueue).to(appExchange).with(gapAnalysisCompletedRoutingKey);
     }
 
     /**
@@ -263,8 +246,7 @@ public class RabbitMQConfig {
      * @return The configured SimpleRabbitListenerContainerFactory.
      */
     @Bean
-    public SimpleRabbitListenerContainerFactory listenerFactory(
-            ConnectionFactory cf) {
+    public SimpleRabbitListenerContainerFactory listenerFactory(ConnectionFactory cf) {
         var factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(cf);
         factory.setMessageConverter(jsonMessageConverter());
