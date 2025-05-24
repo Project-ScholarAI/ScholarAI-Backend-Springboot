@@ -2,6 +2,7 @@ package dev.project.scholar_ai.controller.auth;
 
 import dev.project.scholar_ai.dto.auth.AuthDTO;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
+import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
 import dev.project.scholar_ai.dto.common.ResponseWrapper;
 import dev.project.scholar_ai.exception.ErrorCode;
 import dev.project.scholar_ai.service.auth.AuthService;
@@ -26,6 +27,21 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @PostMapping("/register")
+    public ResponseEntity<ResponseWrapper<String>> register(
+            @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
+        try {
+            authService.registerUser(authDTO.getEmail(), authDTO.getPassword());
+            return ResponseUtil.success("User registered successfully", HttpStatus.CREATED);
+        } catch (Exception e) {
+            return ResponseUtil.error(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.VALIDATION_ERROR,
+                    "Registration failed: " + e.getMessage(),
+                    request.getRequestURI());
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ResponseWrapper<AuthResponse>> login(
             @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
@@ -42,18 +58,19 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ResponseWrapper<String>> register(
-            @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
-        try {
-            authService.registerUser(authDTO.getEmail(), authDTO.getPassword());
-            return ResponseUtil.success("User registered successfully", HttpStatus.CREATED);
-        } catch (Exception e) {
+    @PostMapping("/refresh")
+    public ResponseEntity<ResponseWrapper<AuthResponse>>refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request, HttpServletRequest servletRequest){
+
+        try{
+        }
+        catch (BadCredentialsException e)
+        {
             return ResponseUtil.error(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.VALIDATION_ERROR,
-                    "Registration failed: " + e.getMessage(),
-                    request.getRequestURI());
+                    HttpStatus.UNAUTHORIZED,
+                    ErrorCode.ACCESS_DENIED,
+                    e.getMessage(),
+                    servletRequest.getRequestURI());
         }
     }
 }

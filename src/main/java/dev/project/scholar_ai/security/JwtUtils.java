@@ -55,14 +55,14 @@ public class JwtUtils {
      * @return A JWT token string.
      */
 
-    public String generateAccessToken(UserDetails userDetails)
+    public String generateAccessToken(String username)
     {
-        return generateToken(userDetails.getUsername(), accessTokenValidityMs);
+        return generateToken(username, accessTokenValidityMs);
     }
 
-    public String generateRefreshToken(UserDetails userDetails)
+    public String generateRefreshToken(String username)
     {
-        return generateToken(userDetails.getUsername(), refreshTokenValidityMs);
+        return generateToken(username, refreshTokenValidityMs);
     }
 
     public String generateToken(String username, long expirationMilis)

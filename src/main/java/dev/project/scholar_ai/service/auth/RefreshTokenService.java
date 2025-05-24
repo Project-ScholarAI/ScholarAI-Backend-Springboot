@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class RefreshTokenService {
     private static final String REDIS_REFRESH_TOKEN_PREFIX = "refresh_token";
     private final RedisTemplate<String, String>redisTemplate;
-    
+
     @Value("${spring.app.refreshTokenValidityMs}")
     private long refreshTokenValidityMs;
 
