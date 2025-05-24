@@ -77,7 +77,7 @@ public class AuthService {
     }
 
     //refresh access token when refresh token expires
-    public AuthResponse refreshTokenAccess(String refreshToken)
+    public AuthResponse refreshToken(String refreshToken)
     {
         if(!jwtUtils.validateJwtToken(refreshToken)){
             throw  new BadCredentialsException("Invalid refresh token");

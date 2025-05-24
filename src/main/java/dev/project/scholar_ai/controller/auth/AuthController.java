@@ -60,17 +60,22 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ResponseWrapper<AuthResponse>>refreshToken(
-            @Valid @RequestBody RefreshTokenRequest request, HttpServletRequest servletRequest){
+            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest servletRequest){
 
         try{
+            AuthResponse refreshed = authService.refreshToken(refreshRequest.getRefreshToken());
+            return ResponseUtil.success(refreshed);
         }
         catch (BadCredentialsException e)
         {
             return ResponseUtil.error(
                     HttpStatus.UNAUTHORIZED,
                     ErrorCode.ACCESS_DENIED,
+                    "Refresh failed"+
                     e.getMessage(),
                     servletRequest.getRequestURI());
         }
     }
+
+    
 }
