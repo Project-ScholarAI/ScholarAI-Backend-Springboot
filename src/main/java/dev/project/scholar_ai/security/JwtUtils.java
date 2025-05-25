@@ -21,11 +21,15 @@ import org.springframework.stereotype.Component;
 public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-    @Value("${spring.app.jwt-secret}")
+    @Value("${spring.app.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${spring.app.jwt-expiration-ms}")
-    private int jwtExpirationMs;
+    @Value("${spring.app.access.expiration-ms}")
+    private long accessTokenValidityMs;
+
+    @Value("${spring.app.refresh.expiration-ms}")
+    private long refreshTokenValidityMs;
+
 
     /**
      * Extracts the JWT token from the Authorization header of an HTTP request.

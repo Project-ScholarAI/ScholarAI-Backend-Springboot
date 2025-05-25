@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Login Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<h2>Login with Google</h2>
+
+<div id="g_id_onload"
+     data-client_id="563838064654-djg2a7golctqk3f9j8vbnue7c1rm52g1.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse"
+     data-auto_prompt="false">
+</div>
+
+<div class="g_id_signin" data-type="standard"></div>
+
+<script>
+    function handleCredentialResponse(response) {
+      const idToken = response.credential;
+
+      fetch('http://localhost:8080/api/auth/social-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idToken })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('✅ Login Success');
+        console.log('Access Token:', data.accessToken);
+        console.log('Refresh Token:', data.refreshToken);
+
+        // Store the tokens (localStorage/sessionStorage)
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+
+        // Redirect or show logged-in view
+        alert("Login successful!");
+      })
+      .catch(err => {
+        console.error('❌ Login failed', err);
+        alert("Login failed!");
+      });
+    }
+  </script>
+</body>
+</html>
