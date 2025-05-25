@@ -59,6 +59,18 @@ public class RabbitMQConfig {
     @Value("${scholarai.rabbitmq.gap-analysis.completed-routing-key}")
     private String gapAnalysisCompletedRoutingKey;
 
+    @Value("${scholarai.rabbitmq.web-search.queue}")
+    private String webSearchQueue;
+
+    @Value("${scholarai.rabbitmq.web-search.routing-key}")
+    private String webSearchRoutingKey;
+
+    @Value("${scholarai.rabbitmq.web-search.completed-queue}")
+    private String webSearchCompletedQueue;
+
+    @Value("${scholarai.rabbitmq.web-search.completed-routing-key}")
+    private String webSearchCompletedRoutingKey;
+
     /**
      * Creates a durable topic exchange for the application.
      * Topic exchanges route messages based on wildcard matches between the routing
@@ -103,6 +115,16 @@ public class RabbitMQConfig {
     }
 
     /**
+     * Creates a durable queue for web search tasks.
+     *
+     * @return The configured Queue for web search.
+     */
+    @Bean
+    public Queue webSearchQueue() {
+        return QueueBuilder.durable(webSearchQueue).build();
+    }
+
+    /**
      * Creates a durable queue for completed paper fetching tasks.
      *
      * @return The configured Queue for completed paper fetching.
@@ -130,6 +152,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue gapAnalysisCompletedQueue() {
         return QueueBuilder.durable(gapAnalysisCompletedQueue).build();
+    }
+
+    /**
+     * Creates a durable queue for completed web search tasks.
+     *
+     * @return The configured Queue for completed web search.
+     */
+    @Bean
+    public Queue webSearchCompletedQueue() {
+        return QueueBuilder.durable(webSearchCompletedQueue).build();
     }
 
     /**
@@ -172,6 +204,19 @@ public class RabbitMQConfig {
     }
 
     /**
+     * Binds the web search queue to the application exchange using its specific
+     * routing key.
+     *
+     * @param webSearchQueue The queue for web search tasks.
+     * @param appExchange    The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindWebSearch(Queue webSearchQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(webSearchQueue).to(appExchange).with(webSearchRoutingKey);
+    }
+
+    /**
      * Binds the paper fetch completed queue to the application exchange using its
      * specific routing key.
      *
@@ -209,6 +254,19 @@ public class RabbitMQConfig {
     @Bean
     public Binding bindGapAnalysisCompleted(Queue gapAnalysisCompletedQueue, TopicExchange appExchange) {
         return BindingBuilder.bind(gapAnalysisCompletedQueue).to(appExchange).with(gapAnalysisCompletedRoutingKey);
+    }
+
+    /**
+     * Binds the web search completed queue to the application exchange using its
+     * specific routing key.
+     *
+     * @param webSearchCompletedQueue The queue for completed web search tasks.
+     * @param appExchange             The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindWebSearchCompleted(Queue webSearchCompletedQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(webSearchCompletedQueue).to(appExchange).with(webSearchCompletedRoutingKey);
     }
 
     /**
