@@ -1,11 +1,14 @@
 package dev.project.scholar_ai.service.auth;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.auth.AuthUser;
 import dev.project.scholar_ai.repository.auth.AuthUserRepository;
+import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +28,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private GoogleVerifierUtil googleVerifierUtil; // Create this utility (code below)
+
 
     public Authentication authentication(String email, String password) {
 
@@ -107,6 +114,38 @@ public class AuthService {
     public void logoutUser(String username)
     {
         refreshTokenService.deleteRefreshToken(username);
+    }
+
+
+    //login by google
+    public ResponseEntity<AuthResponse> loginWithGoogle(String idTokenString) {
+        // Step 1: Verify Google token
+        GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
+        if (payload == null) {
+            throw new BadCredentialsException("Invalid Google ID token");
+        }
+
+        String email = payload.getEmail();
+
+        // Step 2: Register if not exist
+        AuthUser user = authUserRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    AuthUser newUser = new AuthUser();
+                    newUser.setEmail(email);
+                    newUser.setEncryptedPassword(""); // No password for social login
+                    newUser.setRole("USER");
+                    return authUserRepository.save(newUser);
+                });
+
+        // Step 3: Generate tokens
+        String accessToken = jwtUtils.generateAccessToken(email);
+        String refreshToken = jwtUtils.generateRefreshToken(email);
+        refreshTokenService.saveRefreshToken(email, refreshToken);
+
+        List<String> roles = List.of(user.getRole());
+
+        AuthResponse authResponse = new AuthResponse(accessToken, refreshToken, email, user.getId(), roles);
+        return ResponseEntity.ok(authResponse);
     }
 
 }

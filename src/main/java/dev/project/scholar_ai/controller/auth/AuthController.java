@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RateLimiter(name = "standard-api")
@@ -85,6 +86,13 @@ public class AuthController {
         String email = principal.getName();
         authService.logoutUser(email);
         return  ResponseUtil.success("Logged out successfully");
+    }
+
+    //login by google
+    @PostMapping("/social-login")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@RequestBody Map<String, String> payload) {
+        String idToken = payload.get("idToken");
+        return authService.loginWithGoogle(idToken);
     }
 
 }
