@@ -1,0 +1,60 @@
+{
+  "info": {
+    "name": "ScholarAI Refresh API",
+    "_postman_id": "c03e970d-d731-47b0-b01b-44fc8d5dc579",
+    "description": "Refresh access token using a valid refresh token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Refresh Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    pm.environment.set(\"accessToken\", json.accessToken);",
+              "    if (json.refreshToken) {",
+              "        pm.environment.set(\"refreshToken\", json.refreshToken);",
+              "    }",
+              "    console.log(\"\u2705 Access token refreshed.\");",
+              "} else {",
+              "    console.warn(\"\u274c Refresh failed.\");",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/auth/refresh",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "refresh"
+          ]
+        }
+      }
+    }
+  ]
+}

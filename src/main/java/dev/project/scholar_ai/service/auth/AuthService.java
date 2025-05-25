@@ -24,17 +24,7 @@ public class AuthService {
     private final UserLoadingService userLoadingService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
-
-    public void registerUser(String email, String password) {
-        if (authUserRepository.findByEmail(email).isPresent()) {
-            throw new BadCredentialsException("User with email " + email + " already exists.");
-        }
-        AuthUser newUser = new AuthUser();
-        newUser.setEmail(email);
-        newUser.setEncryptedPassword(passwordEncoder.encode(password));
-        newUser.setRole("USER"); // Default role
-        authUserRepository.save(newUser);
-    }
+    private final RefreshTokenService refreshTokenService;
 
     public Authentication authentication(String email, String password) {
 
@@ -50,19 +40,73 @@ public class AuthService {
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
+    //register new user
+    public void registerUser(String email, String password) {
+        if (authUserRepository.findByEmail(email).isPresent()) {
+            throw new BadCredentialsException("User with email " + email + " already exists.");
+        }
+        AuthUser newUser = new AuthUser();
+        newUser.setEmail(email);
+        newUser.setEncryptedPassword(passwordEncoder.encode(password));
+        newUser.setRole("USER"); // Default role
+        authUserRepository.save(newUser);
+    }
+
+    //login registered user
     public ResponseEntity<AuthResponse> loginUser(String email, String password) {
+
         Authentication authentication = authentication(email, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
-        String name = authentication.getName();
-        AuthUser loggedUser = authUserRepository
-                .findByEmail(name)
+        String accessToken = jwtUtils.generateAccessToken(userDetails.getUsername());
+        String refreshToken = jwtUtils.generateRefreshToken(userDetails.getUsername());
+        refreshTokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
+
+        AuthUser user = authUserRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Invalid email ..."));
+
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        AuthResponse loginResponse = new AuthResponse(jwtToken, userDetails.getUsername(), loggedUser.getId(), roles);
+
+        AuthResponse loginResponse = new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
+        loginResponse.setRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResponse);
     }
+
+    //refresh access token when refresh token expires
+    public AuthResponse refreshToken(String refreshToken)
+    {
+        if(!jwtUtils.validateJwtToken(refreshToken)){
+            throw  new BadCredentialsException("Invalid refresh token");
+        }
+
+        String username = jwtUtils.getUserNameFromJwtToken(refreshToken);
+
+        if(!refreshTokenService.isRefreshTokenValid(username, refreshToken)){
+            throw new BadCredentialsException("Refresh token is not recognized");
+        }
+
+        String newAccessToken = jwtUtils.generateAccessToken(username);
+        String newRefreshToken = jwtUtils.generateRefreshToken(username);
+        refreshTokenService.saveRefreshToken(username, newRefreshToken);
+
+        AuthUser user = authUserRepository.findByEmail(username)
+                .orElseThrow(()-> new BadCredentialsException("Invalid Email..."));
+
+        List<String>roles = userLoadingService.loadUserByUsername(username).getAuthorities()
+                .stream().map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return new AuthResponse(newAccessToken,newRefreshToken, username, user.getId(), roles);
+    }
+
+    //Logout user
+    public void logoutUser(String username)
+    {
+        refreshTokenService.deleteRefreshToken(username);
+    }
+
 }

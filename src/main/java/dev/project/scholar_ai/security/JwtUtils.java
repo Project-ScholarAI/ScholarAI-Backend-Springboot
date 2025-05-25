@@ -1,9 +1,6 @@
 package dev.project.scholar_ai.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +10,6 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,8 +24,12 @@ public class JwtUtils {
     @Value("${spring.app.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${spring.app.jwtExpirationMs}")
-    private int jwtExpirationMs;
+    @Value("${spring.app.access.expiration-ms}")
+    private long accessTokenValidityMs;
+
+    @Value("${spring.app.refresh.expiration-ms}")
+    private long refreshTokenValidityMs;
+
 
     /**
      * Extracts the JWT token from the Authorization header of an HTTP request.
@@ -49,19 +49,32 @@ public class JwtUtils {
 
     /**
      * Generates a JWT token for the given user details.
-     *
-     * @param userDetails The user details for whom the token is to be generated.
      * @return A JWT token string.
      */
-    public String generateTokenFromUsername(UserDetails userDetails) {
-        String username = userDetails.getUsername();
-        return Jwts.builder()
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(key())
+
+    public String generateAccessToken(String username)
+    {
+        return generateToken(username, accessTokenValidityMs);
+    }
+
+    public String generateRefreshToken(String username)
+    {
+        return generateToken(username, refreshTokenValidityMs);
+    }
+
+    public String generateToken(String username, long expirationMilis)
+    {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationMilis);
+
+        return  Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, jwtSecret)
                 .compact();
     }
+
 
     /**
      * Extracts the username from a JWT token.

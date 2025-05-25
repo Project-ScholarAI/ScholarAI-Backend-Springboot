@@ -65,8 +65,6 @@ springdoc:
     enabled: true
   show-actuator: true
   use-management-port: false
-  swagger-ui:
-    path: /docs
 
 resilience4j:
   ratelimiter:

@@ -1,0 +1,61 @@
+{
+  "info": {
+    "name": "ScholarAI Logout API",
+    "_postman_id": "a9b4d47a-74f2-45e5-9243-347ce6a0a44e",
+    "description": "Logout and invalidate the refresh token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    console.log(\"\u2705 Logged out successfully.\");",
+              "    pm.environment.unset(\"accessToken\");",
+              "    pm.environment.unset(\"refreshToken\");",
+              "} else {",
+              "    console.warn(\"\u274c Logout failed.\");",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/auth/logout",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "logout"
+          ]
+        }
+      }
+    }
+  ]
+}

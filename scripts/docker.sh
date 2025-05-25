@@ -15,8 +15,7 @@ DOCKER_SERVICES="$ROOT_DIR/docker/core-service.yml"
 build_docker() {
     "$ROOT_DIR/scripts/local.sh" build
     docker build --no-cache -t twiggle-app -f "$ROOT_DIR/docker/Dockerfile" "$ROOT_DIR" || {
-        echo -e "${RED}Docker build failed.${NC}"
-        exit 1
+        echo -e "${RED}Docker build failed.${NC}"; exit 1;
     }
     echo -e "${GREEN}Docker image built.${NC}"
 }
@@ -27,6 +26,7 @@ start_services() {
     docker compose -f "$DOCKER_SERVICES" up -d
     echo -e "${GREEN}Core services started.${NC}"
     echo -e "${GREEN}RabbitMQ management UI should be available at http://localhost:15672 ${NC}"
+    echo -e "${GREEN}Redis should be running on port 6379.${NC}"
 }
 stop_services() {
     echo -e "${CYAN}Stopping core services...${NC}"
@@ -56,36 +56,30 @@ rebuild_all() {
 rebuild_nocache() {
     echo -e "${YELLOW}Starting rebuild process with no cache...${NC}"
     echo -e "${CYAN}Rebuilding core services (no-cache)...${NC}"
-    docker compose -f "$DOCKER_SERVICES" build --no-cache || {
-        echo -e "${RED}Core services rebuild (no-cache) failed.${NC}"
-        exit 1
-    }
+    docker compose -f "$DOCKER_SERVICES" build --no-cache || { echo -e "${RED}Core services rebuild (no-cache) failed.${NC}"; exit 1; }
     echo -e "${GREEN}Core services rebuilt successfully (no-cache).${NC}"
 
     echo -e "${CYAN}Rebuilding application (no-cache)...${NC}"
-    docker compose -f "$DOCKER_APP" build --no-cache || {
-        echo -e "${RED}Application rebuild (no-cache) failed.${NC}"
-        exit 1
-    }
+    docker compose -f "$DOCKER_APP" build --no-cache || { echo -e "${RED}Application rebuild (no-cache) failed.${NC}"; exit 1; }
     echo -e "${GREEN}Application rebuilt successfully (no-cache).${NC}"
 
-    start_services &&
-        start_app
+    start_services && \
+    start_app
     echo -e "${GREEN}Rebuild process with no cache completed.${NC}"
 }
 
 case "$1" in
-"build") build_docker ;;
-"start") start_services && start_app ;;
-"stop") stop_app && stop_services ;;
-"start-app") start_app ;;
-"stop-app") stop_app ;;
-"start-svc") start_services ;;
-"stop-svc") stop_services ;;
-"rebuild") rebuild_all ;;
-"rebuild-nocache") rebuild_nocache ;;
-*)
-    echo -e "${RED}Usage: $0 {build|start|stop|start-app|stop-app|start-svc|stop-svc|rebuild|rebuild-nocache}${NC}"
-    exit 1
-    ;;
+    "build") build_docker ;;
+    "start") start_services && start_app ;;
+    "stop") stop_app && stop_services ;;
+    "start-app") start_app ;;
+    "stop-app") stop_app ;;
+    "start-svc") start_services ;;
+    "stop-svc") stop_services ;;
+    "rebuild") rebuild_all ;;
+    "rebuild-nocache") rebuild_nocache ;;
+    *)
+        echo -e "${RED}Usage: $0 {build|start|stop|start-app|stop-app|start-svc|stop-svc|rebuild|rebuild-nocache}${NC}"
+        exit 1
+        ;;
 esac

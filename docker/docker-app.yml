@@ -28,6 +28,14 @@ services:
     environment:
        - SPRING_PROFILES_ACTIVE=dev
 
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "16379:6379"
+    networks:
+      - monitoring-network
+
 networks:
   monitoring-network:
     driver: bridge
