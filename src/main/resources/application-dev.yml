@@ -6,11 +6,8 @@ spring:
       name: ${USER_NAME:your_username_here}
       password: ${USER_PASSWORD:your_password_here}
   app:
-    jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
-    access:
-      expiration-ms: 900000 #15min
-    refresh:
-      expiration-ms: 604800000 #7day
+    jwt-secret: ${JWT_SECRET:your_jwt_secret_here}
+    jwt-expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
   datasource:
     url: jdbc:postgresql://localhost:5433/coreDB
