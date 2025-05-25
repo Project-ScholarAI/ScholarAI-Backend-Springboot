@@ -94,7 +94,7 @@ public class AuthService {
         refreshTokenService.saveRefreshToken(username, newRefreshToken);
 
         AuthUser user = authUserRepository.findByEmail(username)
-                .orElseThrow(()-> new BadCredentialsException("Invalid Emaol..."));
+                .orElseThrow(()-> new BadCredentialsException("Invalid Email..."));
 
         List<String>roles = userLoadingService.loadUserByUsername(username).getAuthorities()
                 .stream().map(GrantedAuthority::getAuthority)

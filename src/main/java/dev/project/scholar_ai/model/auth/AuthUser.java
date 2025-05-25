@@ -15,7 +15,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.UpdateTimestamp;
 
-/** Entity mapping for Supabase `auth.users` table. */
+/** Entity mapping for postgres `auth.users` table. */
 @Getter
 @Setter
 @Entity
