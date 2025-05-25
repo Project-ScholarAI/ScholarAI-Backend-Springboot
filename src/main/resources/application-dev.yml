@@ -101,6 +101,11 @@ scholarai:
       routing-key: scholarai.paper.fetch
       completed-queue: scholarai.paper.fetch.completed.queue
       completed-routing-key: scholarai.paper.fetch.completed
+    web-search:
+      queue: scholarai.websearch.queue
+      routing-key: scholarai.websearch
+      completed-queue: scholarai.websearch.completed.queue
+      completed-routing-key: scholarai.websearch.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization
