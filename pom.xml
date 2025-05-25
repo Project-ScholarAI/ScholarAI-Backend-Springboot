@@ -13,18 +13,25 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>scholar-ai</name>
 	<description>your ai research assitant, mentor and copilot</description>
-	<url/>
+	<url>https://github.com/Project-ScholarAI/ScholarAI-Backend-Springboot.git</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<id>01</id>
+			<name>Tasriad Ahmed Tias</name>
+			<email>trisn.eclipse@gamil.com</email>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/Project-ScholarAI/ScholarAI-Backend-Springboot.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/Project-ScholarAI/ScholarAI-Backend-Springboot.git</developerConnection>
+		<url>https://github.com/Project-ScholarAI/ScholarAI-Backend-Springboot.git</url>
+		<tag>HEAD</tag>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
@@ -228,6 +235,7 @@
 	</dependencyManagement>
 
 	<build>
+		<finalName>scholar-ai</finalName>
 		<plugins>
 			<!-- Compiler Plugin -->
 			<plugin>
@@ -269,6 +277,7 @@
 					<execution>
 						<goals>
 							<goal>build-info</goal>
+							<goal>repackage</goal>
 						</goals>
 					</execution>
 				</executions>

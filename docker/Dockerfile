@@ -23,15 +23,17 @@ FROM amazoncorretto:21-alpine AS runtime
 RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
-ENV ENV=dev
+
+# Build-time ARG for profile (used in COPY)
+ARG ENV
 ENV SPRING_PROFILES_ACTIVE=$ENV
 
 # ---- Sonar fix #1: install packages with --no-cache -------------------------
 RUN apk add --no-cache curl
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 # App + configs
-COPY --from=build /app/target/*.jar  app.jar
+COPY --from=build /app/target/scholar-ai.jar  app.jar
 COPY --from=build /app/src/main/resources/application.yml              ./
 COPY --from=build /app/src/main/resources/application-${ENV}.yml       ./application-${ENV}.yml
 
@@ -41,6 +43,6 @@ USER spring
 # ---- Sonar fix #2: exec-form HEALTHCHECK CMD -------------------------------
 HEALTHCHECK --start-period=30s --interval=30s --timeout=3s --retries=3 \
   CMD ["curl", "--fail", "http://localhost:8080/actuator/health"]
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:+AlwaysPreTouch", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
