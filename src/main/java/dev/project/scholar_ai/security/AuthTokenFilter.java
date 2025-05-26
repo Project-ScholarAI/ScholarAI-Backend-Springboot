@@ -49,18 +49,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         // Check for the custom header to bypass authentication
         log.debug("AuthTokenFilter called for URI: {}", request.getRequestURI());
         try {
-            String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+            String accessToken = parseJwt(request);
+            if (accessToken != null && jwtUtils.validateJwtToken(accessToken)) {
+                String username = jwtUtils.getUserNameFromJwtToken(accessToken);
                 log.debug("Username: {}", username);
-                UserDetails userDetails = userLoadingService.loadUserByUsername(username);
 
+                UserDetails userDetails = userLoadingService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 log.debug("Roles from JWT: {}", userDetails.getAuthorities());
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
@@ -78,8 +77,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
      *         formatted.
      */
     private String parseJwt(HttpServletRequest request) {
-        String jwt = jwtUtils.getJwtFromHeader(request);
-        log.debug("AuthTokenFilter.java: {}", jwt);
-        return jwt;
+        String accessToken = jwtUtils.getJwtFromHeader(request);
+        log.debug("AuthTokenFilter.java: {}", accessToken);
+        return accessToken;
     }
 }

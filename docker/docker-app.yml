@@ -1,12 +1,10 @@
-version: "3.8"
-
 services:
   core:
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        ENV: dev
+        ENV: ${ENV}
     ports:
       - "8080:8080"
     healthcheck:
@@ -17,17 +15,24 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M     # Limit usage to 512MB
+          memory: 512M
         reservations:
-          memory: 256M     # Minimum guaranteed 256MB
+          memory: 256M
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - scholar-network
     env_file:
       - .env
     environment:
-       - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=${ENV}
 
-networks:
-  monitoring-network:
-    driver: bridge
+    # ✅ Add this block to ensure dependency check
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
