@@ -10,18 +10,16 @@ import dev.project.scholar_ai.util.ResponseUtil;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.config.annotation.web.saml2.LogoutRequestDsl;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
-import java.util.Map;
 
 @RestController
 @RateLimiter(name = "standard-api")
@@ -63,36 +61,32 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ResponseWrapper<AuthResponse>>refreshToken(
-            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest servletRequest){
+    public ResponseEntity<ResponseWrapper<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest servletRequest) {
 
-        try{
+        try {
             AuthResponse refreshed = authService.refreshToken(refreshRequest.getRefreshToken());
             return ResponseUtil.success(refreshed);
-        }
-        catch (BadCredentialsException e)
-        {
+        } catch (BadCredentialsException e) {
             return ResponseUtil.error(
                     HttpStatus.UNAUTHORIZED,
                     ErrorCode.ACCESS_DENIED,
-                    "Refresh failed"+
-                    e.getMessage(),
+                    "Refresh failed" + e.getMessage(),
                     servletRequest.getRequestURI());
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ResponseWrapper<String>>logout(Principal principal){
+    public ResponseEntity<ResponseWrapper<String>> logout(Principal principal) {
         String email = principal.getName();
         authService.logoutUser(email);
-        return  ResponseUtil.success("Logged out successfully");
+        return ResponseUtil.success("Logged out successfully");
     }
 
-    //login by google
+    // login by google
     @PostMapping("/social-login")
     public ResponseEntity<AuthResponse> loginWithGoogle(@RequestBody Map<String, String> payload) {
         String idToken = payload.get("idToken");
         return authService.loginWithGoogle(idToken);
     }
-
 }

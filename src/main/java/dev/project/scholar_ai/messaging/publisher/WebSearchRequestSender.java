@@ -18,4 +18,4 @@ public class WebSearchRequestSender {
     public void send(WebSearchRequest req) {
         rt.convertAndSend(rabbitMQConfig.getExchangeName(), rabbitMQConfig.getWebSearchRoutingKey(), req);
     }
-} 
+}

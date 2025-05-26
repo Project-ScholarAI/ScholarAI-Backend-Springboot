@@ -32,7 +32,6 @@ public class AuthService {
     @Autowired
     private GoogleVerifierUtil googleVerifierUtil; // Create this utility (code below)
 
-
     public Authentication authentication(String email, String password) {
 
         UserDetails userDetails = userLoadingService.loadUserByUsername(email);
@@ -47,7 +46,7 @@ public class AuthService {
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
-    //register new user
+    // register new user
     public void registerUser(String email, String password) {
         if (authUserRepository.findByEmail(email).isPresent()) {
             throw new BadCredentialsException("User with email " + email + " already exists.");
@@ -59,7 +58,7 @@ public class AuthService {
         authUserRepository.save(newUser);
     }
 
-    //login registered user
+    // login registered user
     public ResponseEntity<AuthResponse> loginUser(String email, String password) {
 
         Authentication authentication = authentication(email, password);
@@ -78,21 +77,21 @@ public class AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        AuthResponse loginResponse = new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
+        AuthResponse loginResponse =
+                new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
         loginResponse.setRefreshToken(refreshToken);
         return ResponseEntity.ok(loginResponse);
     }
 
-    //refresh access token when refresh token expires
-    public AuthResponse refreshToken(String refreshToken)
-    {
-        if(!jwtUtils.validateJwtToken(refreshToken)){
-            throw  new BadCredentialsException("Invalid refresh token");
+    // refresh access token when access token expires
+    public AuthResponse refreshToken(String refreshToken) {
+        if (!jwtUtils.validateJwtToken(refreshToken)) {
+            throw new BadCredentialsException("Invalid refresh token");
         }
 
         String username = jwtUtils.getUserNameFromJwtToken(refreshToken);
 
-        if(!refreshTokenService.isRefreshTokenValid(username, refreshToken)){
+        if (!refreshTokenService.isRefreshTokenValid(username, refreshToken)) {
             throw new BadCredentialsException("Refresh token is not recognized");
         }
 
@@ -100,24 +99,23 @@ public class AuthService {
         String newRefreshToken = jwtUtils.generateRefreshToken(username);
         refreshTokenService.saveRefreshToken(username, newRefreshToken);
 
-        AuthUser user = authUserRepository.findByEmail(username)
-                .orElseThrow(()-> new BadCredentialsException("Invalid Email..."));
+        AuthUser user = authUserRepository
+                .findByEmail(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid Email..."));
 
-        List<String>roles = userLoadingService.loadUserByUsername(username).getAuthorities()
-                .stream().map(GrantedAuthority::getAuthority)
+        List<String> roles = userLoadingService.loadUserByUsername(username).getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        return new AuthResponse(newAccessToken,newRefreshToken, username, user.getId(), roles);
+        return new AuthResponse(newAccessToken, newRefreshToken, username, user.getId(), roles);
     }
 
-    //Logout user
-    public void logoutUser(String username)
-    {
+    // Logout user
+    public void logoutUser(String username) {
         refreshTokenService.deleteRefreshToken(username);
     }
 
-
-    //login by google
+    // login by google
     public ResponseEntity<AuthResponse> loginWithGoogle(String idTokenString) {
         // Step 1: Verify Google token
         GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
@@ -128,14 +126,13 @@ public class AuthService {
         String email = payload.getEmail();
 
         // Step 2: Register if not exist
-        AuthUser user = authUserRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    AuthUser newUser = new AuthUser();
-                    newUser.setEmail(email);
-                    newUser.setEncryptedPassword(""); // No password for social login
-                    newUser.setRole("USER");
-                    return authUserRepository.save(newUser);
-                });
+        AuthUser user = authUserRepository.findByEmail(email).orElseGet(() -> {
+            AuthUser newUser = new AuthUser();
+            newUser.setEmail(email);
+            newUser.setEncryptedPassword(""); // No password for social login
+            newUser.setRole("USER");
+            return authUserRepository.save(newUser);
+        });
 
         // Step 3: Generate tokens
         String accessToken = jwtUtils.generateAccessToken(email);
@@ -147,5 +144,4 @@ public class AuthService {
         AuthResponse authResponse = new AuthResponse(accessToken, refreshToken, email, user.getId(), roles);
         return ResponseEntity.ok(authResponse);
     }
-
 }

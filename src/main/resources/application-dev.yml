@@ -8,7 +8,7 @@ spring:
   app:
     jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
     access:
-      expiration-ms: 900000 #15min
+      expiration-ms: 60000  # 60,000 milliseconds = 1 minute
     refresh:
       expiration-ms: 604800000 #7day
 
@@ -43,6 +43,10 @@ spring:
     host: core-redis
     port: 6379
     password: ${REDIS_PASSWORD}
+
+  google:
+    client-id: ${SPRING_GOOGLE_CLIENT_ID}
+    client-secret: ${SPRING_GOOGLE_CLIENT_SECRET}
 
 server:
   port: 8080
@@ -107,6 +111,11 @@ scholarai:
       routing-key: scholarai.paper.fetch
       completed-queue: scholarai.paper.fetch.completed.queue
       completed-routing-key: scholarai.paper.fetch.completed
+    web-search:
+      queue: scholarai.websearch.queue
+      routing-key: scholarai.websearch
+      completed-queue: scholarai.websearch.completed.queue
+      completed-routing-key: scholarai.websearch.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization

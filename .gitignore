@@ -36,12 +36,14 @@ build/
 .env
 .env
 **/.env
-**/.env.*
+docker/.env
 !.env
-!**/.env.example
+!docker/.env
 
 # Docker
 docker/.env
-docker/.env.*
-docker/.env.example
+docker/.env
+docker/.env
 docker/.env.example.*
+.env
+.env

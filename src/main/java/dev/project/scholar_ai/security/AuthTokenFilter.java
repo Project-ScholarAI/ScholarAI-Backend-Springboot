@@ -9,6 +9,7 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +32,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
     private final UserLoadingService userLoadingService;
     private static final Logger log = LoggerFactory.getLogger(AuthTokenFilter.class);
+    private final RedisTemplate<String, String> redisTemplate;
+
 
     /**
      * Performs the filtering logic for each request.
@@ -53,6 +56,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             if (accessToken != null && jwtUtils.validateJwtToken(accessToken)) {
                 String username = jwtUtils.getUserNameFromJwtToken(accessToken);
                 log.debug("Username: {}", username);
+
+                // Check if refresh token still exists in Redis
+                String redisKey = "refresh_token" + username;
+                if (!redisTemplate.hasKey(redisKey)) {
+                    log.warn("Access token denied: refresh token for user '{}' not found in Redis", username);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("Session expired or user logged out");
+                    return;
+                }
 
                 UserDetails userDetails = userLoadingService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =

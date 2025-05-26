@@ -5,16 +5,14 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import jakarta.annotation.PostConstruct;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
-
-
 import java.util.Collections;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GoogleVerifierUtil {
 
-    @Value("${google.client-id}")
+    @Value("${spring.google.client-id}")
     private String clientId;
 
     private GoogleIdTokenVerifier verifier;
@@ -22,8 +20,7 @@ public class GoogleVerifierUtil {
     @PostConstruct
     public void init() throws Exception {
         this.verifier = new GoogleIdTokenVerifier.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                JacksonFactory.getDefaultInstance())
+                        GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance())
                 .setAudience(Collections.singletonList(clientId))
                 .build();
     }

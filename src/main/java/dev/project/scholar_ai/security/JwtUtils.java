@@ -30,7 +30,6 @@ public class JwtUtils {
     @Value("${spring.app.refresh.expiration-ms}")
     private long refreshTokenValidityMs;
 
-
     /**
      * Extracts the JWT token from the Authorization header of an HTTP request.
      *
@@ -51,30 +50,25 @@ public class JwtUtils {
      * Generates a JWT token for the given user details.
      * @return A JWT token string.
      */
-
-    public String generateAccessToken(String username)
-    {
+    public String generateAccessToken(String username) {
         return generateToken(username, accessTokenValidityMs);
     }
 
-    public String generateRefreshToken(String username)
-    {
+    public String generateRefreshToken(String username) {
         return generateToken(username, refreshTokenValidityMs);
     }
 
-    public String generateToken(String username, long expirationMilis)
-    {
+    public String generateToken(String username, long expirationMilis) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMilis);
 
-        return  Jwts.builder()
+        return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS256, jwtSecret)
                 .compact();
     }
-
 
     /**
      * Extracts the username from a JWT token.
