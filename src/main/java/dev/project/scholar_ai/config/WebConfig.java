@@ -20,7 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
      * https://*.github.dev,https://twiggle.tech,https://*.vercel.app".
      */
     @Value(
-            "${cors.allowed-origins:http://localhost:3000, https://*.github.dev,https://twiggle.tech,https://*.vercel.app}")
+            "${cors.allowed-origins:http://localhost:63342, https://*.github.dev,https://twiggle.tech,https://*.vercel.app}")
     private String[] allowedOrigins;
 
     /**

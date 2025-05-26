@@ -19,7 +19,7 @@
     function handleCredentialResponse(response) {
       const idToken = response.credential;
 
-      fetch('http://localhost:8080/api/auth/social-login', {
+      fetch('http://localhost:8080/api/v1/auth/social-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
