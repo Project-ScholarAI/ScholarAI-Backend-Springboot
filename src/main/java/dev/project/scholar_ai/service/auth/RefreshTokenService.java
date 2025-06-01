@@ -19,12 +19,7 @@ public class RefreshTokenService {
 
     public void saveRefreshToken(String username, String refreshToken) {
         String key = REDIS_REFRESH_TOKEN_PREFIX + username;
-        redisTemplate.opsForValue().set(
-                key,
-                refreshToken,
-                Duration.ofMillis(refreshTokenValidityMs)
-        );
-
+        redisTemplate.opsForValue().set(key, refreshToken, Duration.ofMillis(refreshTokenValidityMs));
     }
 
     public String getRefreshToken(String username) {

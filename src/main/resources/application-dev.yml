@@ -8,9 +8,22 @@ spring:
   app:
     jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
     access:
-      expiration-ms: 60000  # 60,000 milliseconds = 1 minute
+      expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:600000}  # 60,0000 milliseconds = 15 minute
     refresh:
-      expiration-ms: 604800000 #7day
+      expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} #7day
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:your_redis_password_here}
+      timeout: 2000
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
   datasource:
     url: jdbc:postgresql://localhost:5433/coreDB
@@ -38,11 +51,6 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
-
-  redis:
-    host: core-redis
-    port: 6379
-    password: ${REDIS_PASSWORD}
 
   google:
     client-id: ${SPRING_GOOGLE_CLIENT_ID}
@@ -83,6 +91,8 @@ springdoc:
     enabled: true
   show-actuator: true
   use-management-port: false
+  swagger-ui:
+    path: /docs
 
 resilience4j:
   ratelimiter:
