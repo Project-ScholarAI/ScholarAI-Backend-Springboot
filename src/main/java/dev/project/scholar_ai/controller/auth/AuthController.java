@@ -6,7 +6,9 @@ import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
 import dev.project.scholar_ai.dto.common.APIResponse;
 import dev.project.scholar_ai.service.auth.AuthService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.Map;
@@ -42,10 +44,24 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<APIResponse<AuthResponse>> login(
-            @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
+            @Valid @RequestBody AuthDTO authDTO,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         try {
             AuthResponse authResponse =
                     authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
+
+            //Create secure HttpOnly cookie for refresh token
+            Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
+            refreshCookie.setHttpOnly(true);//only over https
+            refreshCookie.setPath("/api/v1/auth/refresh");
+            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+
+            response.addCookie(refreshCookie);
+
+            //remove refresh token from body before sending
+            authResponse.setRefreshToken(null);
+
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
 
         } catch (BadCredentialsException e) {
