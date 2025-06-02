@@ -173,8 +173,16 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        authService.forgotPassword(email);
-        return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null));
+        try {
+            authService.forgotPassword(email);
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+        }
     }
 
     @PostMapping("/reset-password")
