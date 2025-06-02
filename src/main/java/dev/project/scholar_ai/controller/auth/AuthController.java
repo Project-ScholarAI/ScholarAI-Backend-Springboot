@@ -4,10 +4,7 @@ import dev.project.scholar_ai.dto.auth.AuthDTO;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
 import dev.project.scholar_ai.dto.common.APIResponse;
-import dev.project.scholar_ai.dto.common.ResponseWrapper;
-import dev.project.scholar_ai.exception.ErrorCode;
 import dev.project.scholar_ai.service.auth.AuthService;
-import dev.project.scholar_ai.util.ResponseUtil;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -94,8 +91,21 @@ public class AuthController {
 
     // login by google
     @PostMapping("/social-login")
-    public ResponseEntity<AuthResponse> loginWithGoogle(@RequestBody Map<String, String> payload) {
-        String idToken = payload.get("idToken");
-        return authService.loginWithGoogle(idToken);
+    public ResponseEntity<APIResponse<AuthResponse>>loginWithGoogle(@RequestBody Map<String, String> payload) {
+       try{
+           String idToken = payload.get("idToken");
+           AuthResponse  response = authService.loginWithGoogle(idToken);
+           return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Google login successful", response));
+       }
+       catch (BadCredentialsException e)
+       {
+           return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                   .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Google login failed: "+ e.getMessage(), null));
+       }
+       catch (Exception e)
+       {
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error: " + e.getMessage() , null));
+       }
     }
 }
