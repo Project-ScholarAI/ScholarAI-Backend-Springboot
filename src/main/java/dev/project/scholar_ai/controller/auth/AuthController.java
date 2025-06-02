@@ -76,15 +76,21 @@ public class AuthController {
         {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Refresh error: "+ e.getMessage(), null));
-        }
-    }
+        }}
 
     @PostMapping("/logout")
-    public ResponseEntity<ResponseWrapper<String>> logout(Principal principal) {
-        String email = principal.getName();
-        authService.logoutUser(email);
-        return ResponseUtil.success("Logged out successfully");
-    }
+    public ResponseEntity<APIResponse<String>> logout(Principal principal) {
+        try{
+            String email = principal.getName();
+            authService.logoutUser(email);
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Logout failed: "+ e.getMessage(), null));
+        }}
+
 
     // login by google
     @PostMapping("/social-login")
