@@ -44,18 +44,21 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseWrapper<AuthResponse>> login(
+    public ResponseEntity<APIResponse<AuthResponse>> login(
             @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
         try {
-            ResponseEntity<AuthResponse> authResponse =
+            AuthResponse authResponse =
                     authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
-            return ResponseUtil.success(authResponse.getBody());
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
+
         } catch (BadCredentialsException e) {
-            return ResponseUtil.error(
-                    HttpStatus.UNAUTHORIZED,
-                    ErrorCode.ACCESS_DENIED,
-                    "Invalid email or password",
-                    request.getRequestURI());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password", null));
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: "+ e.getMessage(), null));
         }
     }
 
