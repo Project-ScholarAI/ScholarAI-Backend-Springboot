@@ -47,9 +47,9 @@ public class AuthController {
             @Valid @RequestBody AuthDTO authDTO,
             HttpServletRequest request,
             HttpServletResponse response) {
-        try {
-            AuthResponse authResponse =
-                    authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
+        try
+        {
+            AuthResponse authResponse = authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
 
             //Create secure HttpOnly cookie for refresh token
             Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
@@ -64,16 +64,16 @@ public class AuthController {
 
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
 
-        } catch (BadCredentialsException e) {
+        }
+        catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password", null));
         }
         catch (Exception e)
         {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: "+ e.getMessage(), null));
-        }
-    }
+                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: "+ e.getMessage(), null));}}
+
 
     @PostMapping("/refresh")
     public ResponseEntity<APIResponse<AuthResponse>> refreshToken(
@@ -109,12 +109,24 @@ public class AuthController {
         }}
 
     @PostMapping("/logout")
-    public ResponseEntity<APIResponse<String>> logout(Principal principal) {
+    public ResponseEntity<APIResponse<String>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Principal principal) {
         try{
             String email = principal.getName();
             authService.logoutUser(email);
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
-        }
+
+            //Clear the cookie
+            Cookie cookie = new Cookie("refreshToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/api/v1/auth/refresh");
+            cookie.setMaxAge(0);
+
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));}
         catch (Exception e)
         {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -140,5 +152,4 @@ public class AuthController {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error: " + e.getMessage() , null));
        }
-    }
-}
+    }}
