@@ -79,7 +79,6 @@ start_services() {
     docker compose -f "$DOCKER_SERVICES" up -d
     echo -e "${GREEN}Core services started.${NC}"
     echo -e "${GREEN}RabbitMQ management UI should be available at http://localhost:15672 ${NC}"
-    echo -e "${GREEN}Redis should be running on port 6379.${NC}"
 }
 
 stop_services() {
