@@ -77,11 +77,28 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<APIResponse<AuthResponse>> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest servletRequest) {
+            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest request) {
         try {
+            //Extract refresh token from cookies
+            String refreshToken = null;
+            if(request.getCookies() != null){
+                for(Cookie cookie: request.getCookies()){
+                    if("refreshToken".equals(cookie.getName())){
+                        refreshToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+
+            if(refreshToken == null)
+            {
+                throw new BadCredentialsException("Missing refresh token");
+            }
+
             AuthResponse refreshed = authService.refreshToken(refreshRequest.getRefreshToken());
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Token refreshed successfully", refreshed));
-        } catch (BadCredentialsException e) {
+        }
+        catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid refresh token", null));
         }
