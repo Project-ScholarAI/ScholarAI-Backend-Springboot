@@ -3,6 +3,7 @@ package dev.project.scholar_ai.controller.auth;
 import dev.project.scholar_ai.dto.auth.AuthDTO;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
+import dev.project.scholar_ai.dto.common.APIResponse;
 import dev.project.scholar_ai.dto.common.ResponseWrapper;
 import dev.project.scholar_ai.exception.ErrorCode;
 import dev.project.scholar_ai.service.auth.AuthService;
@@ -30,17 +31,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseWrapper<String>> register(
+    public ResponseEntity<APIResponse<String>> register(
             @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
         try {
             authService.registerUser(authDTO.getEmail(), authDTO.getPassword());
-            return ResponseUtil.success("User registered successfully", HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(APIResponse.success(HttpStatus.CREATED.value(), "User registered successfully", null));
         } catch (Exception e) {
-            return ResponseUtil.error(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.VALIDATION_ERROR,
-                    "Registration failed: " + e.getMessage(),
-                    request.getRequestURI());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), "Registration failed: "+ e.getMessage(), null));
         }
     }
 
