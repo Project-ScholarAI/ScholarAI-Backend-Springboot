@@ -19,10 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RateLimiter(name = "standard-api")
@@ -33,7 +30,7 @@ public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
 
-
+    // register new user
     @PostMapping("/register")
     public ResponseEntity<APIResponse<String>> register(
             @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
@@ -49,6 +46,7 @@ public class AuthController {
         }
     }
 
+    // login registered user
     @PostMapping("/login")
     public ResponseEntity<APIResponse<AuthResponse>> login(
             @Valid @RequestBody AuthDTO authDTO,
@@ -86,6 +84,8 @@ public class AuthController {
                     .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: "+ e.getMessage(), null));}}
 
 
+
+    // refresh access token when access token expires
     @PostMapping("/refresh")
     public ResponseEntity<APIResponse<AuthResponse>> refreshToken(
             @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest request) {
@@ -121,6 +121,8 @@ public class AuthController {
                     .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Refresh error: "+ e.getMessage(), null));
         }}
 
+
+    // logout user
     @PostMapping("/logout")
     public ResponseEntity<APIResponse<String>> logout(
             HttpServletRequest request,
@@ -167,4 +169,21 @@ public class AuthController {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error: " + e.getMessage() , null));
        }
-    }}
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        authService.forgotPassword(email);
+        return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String email,
+                                           @RequestParam String code,
+                                           @RequestParam String newPassword) {
+        authService.resetPassword(email, code, newPassword);
+        return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null));
+    }
+
+
+}
