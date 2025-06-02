@@ -59,7 +59,7 @@ public class AuthService {
     }
 
     // login registered user
-    public ResponseEntity<AuthResponse> loginUser(String email, String password) {
+    public AuthResponse loginUser(String email, String password) {
 
         Authentication authentication = authentication(email, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -77,10 +77,7 @@ public class AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        AuthResponse loginResponse =
-                new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
-        loginResponse.setRefreshToken(refreshToken);
-        return ResponseEntity.ok(loginResponse);
+       return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(),roles);
     }
 
     // refresh access token when access token expires
@@ -116,7 +113,7 @@ public class AuthService {
     }
 
     // login by google
-    public ResponseEntity<AuthResponse> loginWithGoogle(String idTokenString) {
+    public AuthResponse loginWithGoogle(String idTokenString) {
         // Step 1: Verify Google token
         GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
         if (payload == null) {
@@ -141,7 +138,6 @@ public class AuthService {
 
         List<String> roles = List.of(user.getRole());
 
-        AuthResponse authResponse = new AuthResponse(accessToken, refreshToken, email, user.getId(), roles);
-        return ResponseEntity.ok(authResponse);
+        return new AuthResponse(accessToken, refreshToken, email, user.getId(), roles);
     }
 }
