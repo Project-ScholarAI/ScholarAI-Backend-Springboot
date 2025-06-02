@@ -189,8 +189,16 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@RequestParam String email,
                                            @RequestParam String code,
                                            @RequestParam String newPassword) {
-        authService.resetPassword(email, code, newPassword);
-        return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null));
+        try {
+            authService.resetPassword(email, code, newPassword);
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+        }
     }
 
 
