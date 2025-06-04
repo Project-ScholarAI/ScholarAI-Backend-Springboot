@@ -46,6 +46,7 @@ public class AuthController {
         }
     }
 
+
     // login registered user
     @PostMapping("/login")
     public ResponseEntity<APIResponse<AuthResponse>> login(
@@ -115,6 +116,7 @@ public class AuthController {
         }
     }
 
+
     // logout user
     @PostMapping("/logout")
     public ResponseEntity<APIResponse<String>> logout(
@@ -142,60 +144,6 @@ public class AuthController {
         }
     }
 
-    // login by google
-    @PostMapping("/social-google-login")
-    public ResponseEntity<APIResponse<AuthResponse>> loginWithGoogle(
-            @RequestBody Map<String, String> payload,
-            HttpServletResponse httpServletResponse) { // Inject HttpServletResponse
-        try {
-            String idToken = payload.get("idToken");
-            logger.info("social-login hits with idToken: '{}'", idToken);
-
-            if (idToken == null || idToken.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), "ID token is missing.", null));
-            }
-
-            AuthResponse authResponseFromService = authService.loginWithGoogle(idToken);
-
-            // Set the refreshToken as an HttpOnly cookie
-            if (authResponseFromService.getRefreshToken() != null
-                    && !authResponseFromService.getRefreshToken().isEmpty()) {
-                Cookie refreshCookie = new Cookie("refreshToken", authResponseFromService.getRefreshToken());
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setSecure(false); // TODO: Set to true in production (HTTPS)
-                refreshCookie.setPath("/");
-                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // Your refresh token's validity in seconds
-                httpServletResponse.addCookie(refreshCookie);
-
-                // Nullify the refresh token in the body as it's now in a secure cookie
-                authResponseFromService.setRefreshToken(null);
-            } else {
-                // This indicates an issue if refresh token rotation/issuance is expected
-                logger.warn("Refresh token was not provided by authService.loginWithGoogle() for social login.");
-            }
-
-            return ResponseEntity.ok(
-                    APIResponse.success(HttpStatus.OK.value(), "Google login successful", authResponseFromService));
-
-        } catch (BadCredentialsException e) {
-            logger.warn("Google login failed (BadCredentialsException): {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(APIResponse.error(
-                            HttpStatus.UNAUTHORIZED.value(), "Google login failed: " + e.getMessage(), null));
-        } catch (IllegalArgumentException e) { // Catch specific exceptions if id token validation fails
-            logger.warn("Google ID token validation failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(APIResponse.error(
-                            HttpStatus.UNAUTHORIZED.value(), "Invalid Google ID token: " + e.getMessage(), null));
-        } catch (Exception e) {
-            logger.error("Unexpected error during Google social login: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(APIResponse.error(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error during Google login.", null));
-        }
-    }
-
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
@@ -208,6 +156,7 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
             @RequestParam String email, @RequestParam String code, @RequestParam String newPassword) {
@@ -219,4 +168,6 @@ public class AuthController {
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
         }
     }
+
+
 }

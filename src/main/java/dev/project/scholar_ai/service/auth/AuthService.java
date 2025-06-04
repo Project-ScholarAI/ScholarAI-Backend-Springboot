@@ -28,21 +28,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
     private final AuthUserRepository authUserRepository;
     private final UserLoadingService userLoadingService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
-
-    // Inject dependencies (if not already in constructor)
     private final PasswordResetTokenRepository tokenRepository;
     private final EmailService emailService;
 
-    private final SocialUserRepository socialUserRepository;
-
-    @Autowired
-    private GoogleVerifierUtil googleVerifierUtil; // Create this utility (code below)
 
     public Authentication authentication(String email, String password) {
 
@@ -58,6 +51,7 @@ public class AuthService {
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
+
     // register new user
     public void registerUser(String email, String password) {
         if (authUserRepository.findByEmail(email).isPresent()) {
@@ -69,6 +63,7 @@ public class AuthService {
         newUser.setRole("USER"); // Default role
         authUserRepository.save(newUser);
     }
+
 
     // login registered user
     public AuthResponse loginUser(String email, String password) {
@@ -91,6 +86,7 @@ public class AuthService {
 
         return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
     }
+
 
     // refresh access token when access token expires
     public AuthResponse refreshToken(String refreshToken) {
@@ -119,59 +115,12 @@ public class AuthService {
         return new AuthResponse(newAccessToken, newRefreshToken, username, user.getId(), roles);
     }
 
+
     // Logout user
     public void logoutUser(String username) {
         refreshTokenService.deleteRefreshToken(username);
     }
 
-    // login by google
-    public AuthResponse loginWithGoogle(String idTokenString) {
-        GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
-
-        if (payload == null) {
-            throw new BadCredentialsException("Invalid Google ID token");
-        }
-
-        String email = payload.getEmail();
-        String providerId = payload.getSubject();
-        String name = (String) payload.get("name");
-
-        if (email == null || email.isEmpty()) {
-            throw new IllegalArgumentException("Email not found in Google ID token payload.");
-        }
-
-        SocialUser user = socialUserRepository
-                .findByEmailAndProvider(email, "GOOGLE")
-                .map(existingUser -> {
-                    if (!providerId.equals(existingUser.getProviderId())) {
-                        throw new BadCredentialsException("Google account mismatch for this email.");
-                    }
-
-                    // Update name if changed
-                    if (name != null && !name.equals(existingUser.getName())) {
-                        existingUser.setName(name);
-                        return socialUserRepository.save(existingUser);
-                    }
-
-                    return existingUser;
-                })
-                .orElseGet(() -> {
-                    SocialUser newUser = new SocialUser();
-                    newUser.setEmail(email);
-                    newUser.setProvider("GOOGLE");
-                    newUser.setProviderId(providerId);
-                    newUser.setName(name);
-                    newUser.setRole("USER");
-                    return socialUserRepository.save(newUser);
-                });
-
-        // Generate tokens
-        String accessToken = jwtUtils.generateAccessToken(user.getEmail());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
-        refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
-
-        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
-    }
 
     // Forgot Password: generate and send reset code
     public void forgotPassword(String email) {
@@ -196,6 +145,7 @@ public class AuthService {
         emailService.sendResetCode(email, code);
     }
 
+
     // Reset Password: verify code and update password
     public void resetPassword(String email, String code, String newPassword) {
         AuthUser user = authUserRepository
@@ -215,4 +165,6 @@ public class AuthService {
 
         tokenRepository.delete(token); // Cleanup used token
     }
+
+
 }
