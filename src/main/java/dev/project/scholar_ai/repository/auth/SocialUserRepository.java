@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SocialUserRepository extends JpaRepository<SocialUser, UUID> {
-    Optional<SocialUser> findByEmailAndProvider(String email, String provider);
+    Optional<SocialUser> findByEmail(String email);
 }

@@ -6,6 +6,7 @@ import dev.project.scholar_ai.service.auth.SocialAuthService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RateLimiter(name = "standard-api")
 @RequestMapping("api/v1/auth/social")
 @RequiredArgsConstructor
 public class SocialAuthController {
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private static final Logger logger = LoggerFactory.getLogger(SocialAuthController.class);
     private final SocialAuthService socialAuthService;
 
     // login by google
@@ -82,22 +81,22 @@ public class SocialAuthController {
     }
 
     @PostMapping("/github-login")
-    public ResponseEntity<APIResponse<AuthResponse>>loginWithGithub(
-            @RequestBody Map<String, String>payload,
-            HttpServletResponse httpServletResponse
-    ){
-        try{
+    public ResponseEntity<APIResponse<AuthResponse>> loginWithGithub(
+            @RequestBody Map<String, String> payload, HttpServletResponse httpServletResponse) {
+        try {
+            logger.info("github-login endpoint hits");
             String code = payload.get("code");
 
-            if(code == null || code.trim().isEmpty()){
-                return ResponseEntity.badRequest().body(
-                        APIResponse.error(HttpStatus.BAD_REQUEST.value(),"GitHub authorization code is missing", null));
+            if (code == null || code.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(APIResponse.error(
+                                HttpStatus.BAD_REQUEST.value(), "GitHub authorization code is missing", null));
             }
 
             AuthResponse authResponse = socialAuthService.loginWithGithub(code);
 
-            if(authResponse.getRefreshToken() != null && !authResponse.getRefreshToken().isEmpty())
-            {
+            if (authResponse.getRefreshToken() != null
+                    && !authResponse.getRefreshToken().isEmpty()) {
                 Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
                 refreshCookie.setHttpOnly(true);
                 refreshCookie.setSecure(false); // Change to true in production
@@ -107,21 +106,29 @@ public class SocialAuthController {
                 authResponse.setRefreshToken(null); // remove from body
             }
 
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "GitHub login successful", authResponse));
+            logger.info("cookie set for github auth");
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "GitHub login successful", authResponse));
 
+        } catch (BadCredentialsException e) {
+            logger.warn("GitHub login failed (BadCredentialsException): {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(APIResponse.error(
+                            HttpStatus.UNAUTHORIZED.value(), "GitHub login failed: " + e.getMessage(), null));
+        } catch (IllegalStateException e) {
+            logger.warn("GitHub token exchange failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(APIResponse.error(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Failed to get access token from GitHub: " + e.getMessage(),
+                            null));
+        } catch (Exception e) {
+            logger.error("Unexpected error during GitHub login: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Unexpected error during GitHub login: " + e.getMessage(),
+                            null));
         }
-        catch (BadCredentialsException e)
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Github login failed: "+ e.getMessage(), null));
-        }
-        catch (Exception e)
-        {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error during GitHub login: "+ e.getMessage(), null));
-        }
-
     }
-
-
 }

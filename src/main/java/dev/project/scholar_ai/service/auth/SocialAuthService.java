@@ -9,7 +9,6 @@ import dev.project.scholar_ai.repository.auth.SocialUserRepository;
 import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,17 +27,18 @@ public class SocialAuthService {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final SocialUserRepository socialUserRepository;
-    @Autowired
-    private GoogleVerifierUtil googleVerifierUtil;
-    @Autowired
-    private RestTemplate restTemplate;
+    private final GoogleVerifierUtil googleVerifierUtil;
+    private final RestTemplate restTemplate;
 
 
-    @Value("${github.client-id}")
+    @Value("${spring.github.client-id}")
     private String githubClientId;
 
-    @Value("${github.client-secret}")
+    @Value("${spring.github.client-secret}")
     private String githubClientSecret;
+
+    @Value("${spring.github.redirect-uri}")
+    private String githubRedirectUri;
 
 
     // login by google
@@ -58,19 +58,19 @@ public class SocialAuthService {
         }
 
         SocialUser user = socialUserRepository
-                .findByEmailAndProvider(email, "GOOGLE")
+                .findByEmail(email)
                 .map(existingUser -> {
-                    if (!providerId.equals(existingUser.getProviderId())) {
-                        throw new BadCredentialsException("Google account mismatch for this email.");
-                    }
+//                    if (!providerId.equals(existingUser.getProviderId())) {
+//                        throw new BadCredentialsException("Google account mismatch for this email.");
+//                    }
 
                     // Update name if changed
                     if (name != null && !name.equals(existingUser.getName())) {
                         existingUser.setName(name);
-                        return socialUserRepository.save(existingUser);
+//                        return socialUserRepository.save(existingUser);
                     }
-
-                    return existingUser;
+                    return socialUserRepository.save(existingUser);
+                    //return existingUser;
                 })
                 .orElseGet(() -> {
                     SocialUser newUser = new SocialUser();
@@ -87,7 +87,8 @@ public class SocialAuthService {
         String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
         refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
 
-        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
+        return new AuthResponse(
+                accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
     }
 
 
@@ -111,31 +112,39 @@ public class SocialAuthService {
         }
 
         SocialUser socialUser = socialUserRepository
-                .findByEmailAndProvider(email, "GITHUB")
+                .findByEmail(email)
                 .map(existingUser ->{
-                    if(!providedId.equals(existingUser.getProviderId())){
-                        throw new BadCredentialsException("Github account mismatch for this email");
-                    }
+//                    if(!providedId.equals(existingUser.getProviderId())){
+//                        throw new BadCredentialsException("Github account mismatch for this email");
+//                    }
                     if(name != null && !name.equals(existingUser.getName())){
                         existingUser.setName(name);
-                        return socialUserRepository.save(existingUser);
+                      //  return socialUserRepository.save(existingUser);
                     }
-                    return existingUser;
+                    return socialUserRepository.save(existingUser);
+                    //return existingUser;
                 })
                 .orElseGet(()->{
                     SocialUser newUser = new SocialUser();
                     newUser.setEmail(email);
                     newUser.setProvider("GITHUB");
+                    newUser.setProviderId(providedId);
                     newUser.setName(name);
                     newUser.setRole("USER");
                     return socialUserRepository.save(newUser);
                 });
 
         //Generate tokens
-        String jwtAccessToken = jwtUtils.generateAccessToken(gitHubUser.getEmail());
-        String jwtRefreshToken = jwtUtils.generateRefreshToken(gitHubUser.getEmail());
+        String jwtAccessToken = jwtUtils.generateAccessToken(socialUser.getEmail());
+        String jwtRefreshToken = jwtUtils.generateRefreshToken(socialUser.getEmail());
+        refreshTokenService.saveRefreshToken(socialUser.getEmail(), jwtRefreshToken);
 
-        return new AuthResponse(jwtAccessToken, jwtRefreshToken, gitHubUser.getEmail(), gitHubUser.getId(), List.of(socialUser.getRole()));
+        return new AuthResponse(
+                jwtAccessToken, 
+                jwtRefreshToken, 
+                socialUser.getEmail(),
+                socialUser.getId(),
+                List.of(socialUser.getRole()));
     }
 
 
@@ -146,15 +155,23 @@ public class SocialAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
-        MultiValueMap<String, String>body = new LinkedMultiValueMap<>();
-        body.add("client_add", githubClientId);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", githubClientId);
         body.add("client_secret", githubClientSecret);
-        body.add("code",code);
+        body.add("code", code);
+        body.add("redirect_uri", githubRedirectUri);
 
-        HttpEntity<MultiValueMap<String, String>>entity = new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
         ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
+        System.out.println("GitHub token exchange response: " + response);
+
         if (response.getBody() == null || !response.getBody().containsKey("access_token")) {
+            // Log the error response from GitHub if available
+            if (response.getBody() != null && response.getBody().containsKey("error_description")) {
+                System.err.println(
+                        "GitHub token exchange failed: " + response.getBody().get("error_description"));
+            }
             throw new IllegalStateException("Failed to get access token from GitHub");
         }
 
@@ -175,6 +192,8 @@ public class SocialAuthService {
                 entity,
                 GitHubUserDTO.class
         );
+
+        System.out.println("GitHub /user raw response: " + response.getBody());
 
         GitHubUserDTO userDTO = response.getBody();
 

@@ -55,6 +55,10 @@ spring:
   google:
     client-id: ${SPRING_GOOGLE_CLIENT_ID}
     client-secret: ${SPRING_GOOGLE_CLIENT_SECRET}
+  github:
+    client-id: ${SPRING_GITHUB_CLIENT_ID}
+    client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/callback
 
 server:
   port: 8080

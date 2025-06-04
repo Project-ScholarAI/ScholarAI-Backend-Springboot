@@ -1,21 +1,16 @@
 package dev.project.scholar_ai.service.auth;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.auth.AuthUser;
 import dev.project.scholar_ai.model.auth.PasswordResetToken;
-import dev.project.scholar_ai.model.auth.SocialUser;
 import dev.project.scholar_ai.repository.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.auth.PasswordResetTokenRepository;
-import dev.project.scholar_ai.repository.auth.SocialUserRepository;
-import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

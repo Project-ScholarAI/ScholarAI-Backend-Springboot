@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GitHubEmailDTO{
+public class GitHubEmailDTO {
     private String email;
     private boolean primary;
     private boolean verified;
