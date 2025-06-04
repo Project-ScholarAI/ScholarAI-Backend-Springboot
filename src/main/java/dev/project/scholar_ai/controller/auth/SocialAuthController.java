@@ -94,7 +94,20 @@ public class SocialAuthController {
                         APIResponse.error(HttpStatus.BAD_REQUEST.value(),"GitHub authorization code is missing", null));
             }
 
-            return null;
+            AuthResponse authResponse = socialAuthService.loginWithGithub(code);
+
+            if(authResponse.getRefreshToken() != null && !authResponse.getRefreshToken().isEmpty())
+            {
+                Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
+                refreshCookie.setHttpOnly(true);
+                refreshCookie.setSecure(false); // Change to true in production
+                refreshCookie.setPath("/");
+                refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+                httpServletResponse.addCookie(refreshCookie);
+                authResponse.setRefreshToken(null); // remove from body
+            }
+
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "GitHub login successful", authResponse));
 
         }
         catch (BadCredentialsException e)
