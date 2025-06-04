@@ -4,20 +4,18 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.auth.AuthUser;
 import dev.project.scholar_ai.model.auth.PasswordResetToken;
+import dev.project.scholar_ai.model.auth.SocialUser;
 import dev.project.scholar_ai.repository.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.auth.PasswordResetTokenRepository;
+import dev.project.scholar_ai.repository.auth.SocialUserRepository;
 import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
-
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.misc.LogManager;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,6 +38,8 @@ public class AuthService {
     // Inject dependencies (if not already in constructor)
     private final PasswordResetTokenRepository tokenRepository;
     private final EmailService emailService;
+
+    private final SocialUserRepository socialUserRepository;
 
     @Autowired
     private GoogleVerifierUtil googleVerifierUtil; // Create this utility (code below)
@@ -89,7 +89,7 @@ public class AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-       return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(),roles);
+        return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
     }
 
     // refresh access token when access token expires
@@ -119,8 +119,6 @@ public class AuthService {
         return new AuthResponse(newAccessToken, newRefreshToken, username, user.getId(), roles);
     }
 
-    
-
     // Logout user
     public void logoutUser(String username) {
         refreshTokenService.deleteRefreshToken(username);
@@ -128,37 +126,57 @@ public class AuthService {
 
     // login by google
     public AuthResponse loginWithGoogle(String idTokenString) {
-        // Step 1: Verify Google token
         GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
+
         if (payload == null) {
             throw new BadCredentialsException("Invalid Google ID token");
         }
 
         String email = payload.getEmail();
+        String providerId = payload.getSubject();
+        String name = (String) payload.get("name");
 
-        // Step 2: Register if not exist
-        AuthUser user = authUserRepository.findByEmail(email).orElseGet(() -> {
-            AuthUser newUser = new AuthUser();
-            newUser.setEmail(email);
-            newUser.setEncryptedPassword(""); // No password for social login
-            newUser.setRole("USER");
-            return authUserRepository.save(newUser);
-        });
+        if (email == null || email.isEmpty()) {
+            throw new IllegalArgumentException("Email not found in Google ID token payload.");
+        }
 
-        // Step 3: Generate tokens
-        String accessToken = jwtUtils.generateAccessToken(email);
-        String refreshToken = jwtUtils.generateRefreshToken(email);
-        refreshTokenService.saveRefreshToken(email, refreshToken);
+        SocialUser user = socialUserRepository
+                .findByEmailAndProvider(email, "GOOGLE")
+                .map(existingUser -> {
+                    if (!providerId.equals(existingUser.getProviderId())) {
+                        throw new BadCredentialsException("Google account mismatch for this email.");
+                    }
 
-        List<String> roles = List.of(user.getRole());
+                    // Update name if changed
+                    if (name != null && !name.equals(existingUser.getName())) {
+                        existingUser.setName(name);
+                        return socialUserRepository.save(existingUser);
+                    }
 
-        return new AuthResponse(accessToken, refreshToken, email, user.getId(), roles);
+                    return existingUser;
+                })
+                .orElseGet(() -> {
+                    SocialUser newUser = new SocialUser();
+                    newUser.setEmail(email);
+                    newUser.setProvider("GOOGLE");
+                    newUser.setProviderId(providerId);
+                    newUser.setName(name);
+                    newUser.setRole("USER");
+                    return socialUserRepository.save(newUser);
+                });
+
+        // Generate tokens
+        String accessToken = jwtUtils.generateAccessToken(user.getEmail());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
+        refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
+
+        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
     }
-
 
     // Forgot Password: generate and send reset code
     public void forgotPassword(String email) {
-        AuthUser user = authUserRepository.findByEmail(email)
+        AuthUser user = authUserRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("No user with that email."));
 
         String code = String.format("%06d", new Random().nextInt(999999));
@@ -178,13 +196,14 @@ public class AuthService {
         emailService.sendResetCode(email, code);
     }
 
-
     // Reset Password: verify code and update password
     public void resetPassword(String email, String code, String newPassword) {
-        AuthUser user = authUserRepository.findByEmail(email)
+        AuthUser user = authUserRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("No user with that email."));
 
-        PasswordResetToken token = tokenRepository.findByUserAndToken((User) user, code)
+        PasswordResetToken token = tokenRepository
+                .findByUserAndToken((User) user, code)
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired code."));
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
@@ -196,5 +215,4 @@ public class AuthService {
 
         tokenRepository.delete(token); // Cleanup used token
     }
-
 }

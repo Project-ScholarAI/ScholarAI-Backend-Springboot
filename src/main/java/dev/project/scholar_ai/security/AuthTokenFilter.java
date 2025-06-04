@@ -34,7 +34,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(AuthTokenFilter.class);
     private final RedisTemplate<String, String> redisTemplate;
 
-
     /**
      * Performs the filtering logic for each request.
      * It extracts the JWT from the request, validates it, and if valid,

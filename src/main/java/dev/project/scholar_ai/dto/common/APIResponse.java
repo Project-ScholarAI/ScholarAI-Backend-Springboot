@@ -1,12 +1,13 @@
 package dev.project.scholar_ai.dto.common;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class APIResponse <T>{
+public class APIResponse<T> {
     @Builder.Default
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime timestamp = LocalDateTime.now();
@@ -15,7 +16,7 @@ public class APIResponse <T>{
     private String message;
     private T data;
 
-    public static <T> APIResponse<T> success(int status, String message, T data){
+    public static <T> APIResponse<T> success(int status, String message, T data) {
         return APIResponse.<T>builder()
                 .status(status)
                 .message(message)
@@ -23,9 +24,11 @@ public class APIResponse <T>{
                 .build();
     }
 
-    public static <T> APIResponse<T>error(int status, String message, T data){
+    public static <T> APIResponse<T> error(int status, String message, T data) {
         return APIResponse.<T>builder()
                 .status(status)
                 .message(message)
                 .data(data)
-                .build();}}
+                .build();
+    }
+}

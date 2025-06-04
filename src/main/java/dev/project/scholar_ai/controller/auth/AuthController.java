@@ -1,6 +1,5 @@
 package dev.project.scholar_ai.controller.auth;
 
-import dev.project.scholar_ai.config.RedisConfig;
 import dev.project.scholar_ai.dto.auth.AuthDTO;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
@@ -35,55 +34,51 @@ public class AuthController {
     public ResponseEntity<APIResponse<String>> register(
             @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request) {
         try {
-            logger.info("/register endpoint hitted with request, " , request);
+            logger.info("/register endpoint hitted with request, ", request);
 
             authService.registerUser(authDTO.getEmail(), authDTO.getPassword());
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(APIResponse.success(HttpStatus.CREATED.value(), "User registered successfully", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), "Registration failed: "+ e.getMessage(), null));
+                    .body(APIResponse.error(
+                            HttpStatus.BAD_REQUEST.value(), "Registration failed: " + e.getMessage(), null));
         }
     }
 
     // login registered user
     @PostMapping("/login")
     public ResponseEntity<APIResponse<AuthResponse>> login(
-            @Valid @RequestBody AuthDTO authDTO,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        try
-        {
+            @Valid @RequestBody AuthDTO authDTO, HttpServletRequest request, HttpServletResponse response) {
+        try {
             logger.info("login endpoint hitted with request,", request);
 
             AuthResponse authResponse = authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
 
-            //Create secure HttpOnly cookie for refresh token
+            // Create secure HttpOnly cookie for refresh token
             Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-            refreshCookie.setHttpOnly(true);//only over https
+            refreshCookie.setHttpOnly(true); // only over https
             refreshCookie.setSecure(false); // for local testing
             refreshCookie.setPath("/");
             refreshCookie.setMaxAge(7 * 24 * 60 * 60);
 
             response.addCookie(refreshCookie);
 
-            //remove refresh token from body before sending
+            // remove refresh token from body before sending
             authResponse.setRefreshToken(null);
 
             logger.info("response cookie added , authResponse: ", authResponse);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
 
-        }
-        catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password", null));
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: "+ e.getMessage(), null));}}
-
-
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: " + e.getMessage(), null));
+        }
+    }
 
     // refresh access token when access token expires
     @PostMapping("/refresh")
@@ -92,49 +87,45 @@ public class AuthController {
         try {
             logger.info("refresh endpoint hitted");
 
-            //Extract refresh token from cookies
+            // Extract refresh token from cookies
             String refreshToken = null;
-            if(request.getCookies() != null){
-                for(Cookie cookie: request.getCookies()){
-                    if("refreshToken".equals(cookie.getName())){
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("refreshToken".equals(cookie.getName())) {
                         refreshToken = cookie.getValue();
                         break;
                     }
                 }
             }
 
-            if(refreshToken == null)
-            {
+            if (refreshToken == null) {
                 throw new BadCredentialsException("Missing refresh token");
             }
 
             AuthResponse refreshed = authService.refreshToken(refreshRequest.getRefreshToken());
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Token refreshed successfully", refreshed));
-        }
-        catch (BadCredentialsException e) {
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Token refreshed successfully", refreshed));
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid refresh token", null));
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Refresh error: "+ e.getMessage(), null));
-        }}
-
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Refresh error: " + e.getMessage(), null));
+        }
+    }
 
     // logout user
     @PostMapping("/logout")
     public ResponseEntity<APIResponse<String>> logout(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Principal principal) {
-        try{
+            HttpServletRequest request, HttpServletResponse response, Principal principal) {
+        try {
             logger.info("logout endpoint hitted");
 
             String email = principal.getName();
             authService.logoutUser(email);
 
-            //Clear the cookie
+            // Clear the cookie
             Cookie cookie = new Cookie("refreshToken", null);
             cookie.setHttpOnly(true);
             cookie.setSecure(false);
@@ -143,63 +134,90 @@ public class AuthController {
 
             response.addCookie(cookie);
 
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));}
-        catch (Exception e)
-        {
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Logged out successfully", null));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Logout failed: "+ e.getMessage(), null));
-        }}
-
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Logout failed: " + e.getMessage(), null));
+        }
+    }
 
     // login by google
     @PostMapping("/social-login")
-    public ResponseEntity<APIResponse<AuthResponse>>loginWithGoogle(@RequestBody Map<String, String> payload) {
-       try{
-           String idToken = payload.get("idToken");
-           AuthResponse  response = authService.loginWithGoogle(idToken);
-           return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Google login successful", response));
-       }
-       catch (BadCredentialsException e)
-       {
-           return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                   .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Google login failed: "+ e.getMessage(), null));
-       }
-       catch (Exception e)
-       {
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error: " + e.getMessage() , null));
-       }
+    public ResponseEntity<APIResponse<AuthResponse>> loginWithGoogle(
+            @RequestBody Map<String, String> payload,
+            HttpServletResponse httpServletResponse) { // Inject HttpServletResponse
+        try {
+            String idToken = payload.get("idToken");
+            logger.info("social-login hits eith idToken:", idToken);
+
+            if (idToken == null || idToken.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), "ID token is missing.", null));
+            }
+
+            AuthResponse authResponseFromService = authService.loginWithGoogle(idToken);
+
+            // Set the refreshToken as an HttpOnly cookie
+            if (authResponseFromService.getRefreshToken() != null
+                    && !authResponseFromService.getRefreshToken().isEmpty()) {
+                Cookie refreshCookie = new Cookie("refreshToken", authResponseFromService.getRefreshToken());
+                refreshCookie.setHttpOnly(true);
+                refreshCookie.setSecure(false); // TODO: Set to true in production (HTTPS)
+                refreshCookie.setPath("/");
+                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // Your refresh token's validity in seconds
+                httpServletResponse.addCookie(refreshCookie);
+
+                // Nullify the refresh token in the body as it's now in a secure cookie
+                authResponseFromService.setRefreshToken(null);
+            } else {
+                // This indicates an issue if refresh token rotation/issuance is expected
+                logger.warn("Refresh token was not provided by authService.loginWithGoogle() for social login.");
+                // Depending on your design, this might be an error condition
+            }
+
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Google login successful", authResponseFromService));
+
+        } catch (BadCredentialsException e) {
+            logger.warn("Google login failed (BadCredentialsException): {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(APIResponse.error(
+                            HttpStatus.UNAUTHORIZED.value(), "Google login failed: " + e.getMessage(), null));
+        } catch (IllegalArgumentException e) { // Catch specific exceptions if id token validation fails
+            logger.warn("Google ID token validation failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(APIResponse.error(
+                            HttpStatus.UNAUTHORIZED.value(), "Invalid Google ID token: " + e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Unexpected error during Google social login: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error during Google login.", null));
+        }
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
             authService.forgotPassword(email);
-            return ResponseEntity.ok(
-                    APIResponse.success(HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null)
-            );
+            return ResponseEntity.ok(APIResponse.success(
+                    HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null));
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
         }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String email,
-                                           @RequestParam String code,
-                                           @RequestParam String newPassword) {
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String email, @RequestParam String code, @RequestParam String newPassword) {
         try {
             authService.resetPassword(email, code, newPassword);
-            return ResponseEntity.ok(
-                    APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null)
-            );
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null));
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
         }
     }
-
-
 }

@@ -1,5 +1,8 @@
 package dev.project.scholar_ai.security;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
+import java.util.Arrays;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Security configuration class for the application.
@@ -50,8 +49,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(withDefaults()) // Enable CORS here
+        http.cors(withDefaults()) // Enable CORS here
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(
                                 "/api/test/test",
@@ -71,8 +69,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .csrf(csrf ->
-                        csrf.ignoringRequestMatchers("/api/v1/**", "/api/demo/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/demo/**"))
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
