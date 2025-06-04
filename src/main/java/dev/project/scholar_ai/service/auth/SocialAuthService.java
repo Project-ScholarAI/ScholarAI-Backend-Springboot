@@ -92,13 +92,50 @@ public class SocialAuthService {
 
 
 
+    //login with github
     public AuthResponse loginWithGithub(String code){
 
         //Exchange code for access token
         String accessToken = exchangeCodeForAccessToken(code);
 
         //Get github user profile
-        return null;
+        GitHubUserDTO gitHubUser = fetchGitHubUser(accessToken);
+
+        String email = gitHubUser.getEmail();
+        String providedId = gitHubUser.getId().toString();
+        String name = gitHubUser.getName() != null ? gitHubUser.getName(): gitHubUser.getLogin();
+
+        if(email == null || email.isEmpty())
+        {
+            throw new IllegalArgumentException("Email not found in Github user profile");
+        }
+
+        SocialUser socialUser = socialUserRepository
+                .findByEmailAndProvider(email, "GITHUB")
+                .map(existingUser ->{
+                    if(!providedId.equals(existingUser.getProviderId())){
+                        throw new BadCredentialsException("Github account mismatch for this email");
+                    }
+                    if(name != null && !name.equals(existingUser.getName())){
+                        existingUser.setName(name);
+                        return socialUserRepository.save(existingUser);
+                    }
+                    return existingUser;
+                })
+                .orElseGet(()->{
+                    SocialUser newUser = new SocialUser();
+                    newUser.setEmail(email);
+                    newUser.setProvider("GITHUB");
+                    newUser.setName(name);
+                    newUser.setRole("USER");
+                    return socialUserRepository.save(newUser);
+                });
+
+        //Generate tokens
+        String jwtAccessToken = jwtUtils.generateAccessToken(gitHubUser.getEmail());
+        String jwtRefreshToken = jwtUtils.generateRefreshToken(gitHubUser.getEmail());
+
+        return new AuthResponse(jwtAccessToken, jwtRefreshToken, gitHubUser.getEmail(), gitHubUser.getId(), List.of(socialUser.getRole()));
     }
 
 
