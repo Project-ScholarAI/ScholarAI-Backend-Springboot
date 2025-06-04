@@ -81,5 +81,34 @@ public class SocialAuthController {
         }
     }
 
+    @PostMapping("/github-login")
+    public ResponseEntity<APIResponse<AuthResponse>>loginWithGithub(
+            @RequestBody Map<String, String>payload,
+            HttpServletResponse httpServletResponse
+    ){
+        try{
+            String code = payload.get("code");
+
+            if(code == null || code.trim().isEmpty()){
+                return ResponseEntity.badRequest().body(
+                        APIResponse.error(HttpStatus.BAD_REQUEST.value(),"GitHub authorization code is missing", null));
+            }
+
+            return null;
+
+        }
+        catch (BadCredentialsException e)
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Github login failed: "+ e.getMessage(), null));
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected error during GitHub login: "+ e.getMessage(), null));
+        }
+
+    }
+
 
 }
