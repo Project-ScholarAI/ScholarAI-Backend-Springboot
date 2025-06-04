@@ -149,7 +149,7 @@ public class AuthController {
             HttpServletResponse httpServletResponse) { // Inject HttpServletResponse
         try {
             String idToken = payload.get("idToken");
-            logger.info("social-login hits eith idToken:", idToken);
+            logger.info("social-login hits with idToken: '{}'", idToken);
 
             if (idToken == null || idToken.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
