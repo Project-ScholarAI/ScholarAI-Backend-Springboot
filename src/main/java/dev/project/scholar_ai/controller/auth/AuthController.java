@@ -143,7 +143,7 @@ public class AuthController {
     }
 
     // login by google
-    @PostMapping("/social-login")
+    @PostMapping("/social-google-login")
     public ResponseEntity<APIResponse<AuthResponse>> loginWithGoogle(
             @RequestBody Map<String, String> payload,
             HttpServletResponse httpServletResponse) { // Inject HttpServletResponse
@@ -173,7 +173,6 @@ public class AuthController {
             } else {
                 // This indicates an issue if refresh token rotation/issuance is expected
                 logger.warn("Refresh token was not provided by authService.loginWithGoogle() for social login.");
-                // Depending on your design, this might be an error condition
             }
 
             return ResponseEntity.ok(
