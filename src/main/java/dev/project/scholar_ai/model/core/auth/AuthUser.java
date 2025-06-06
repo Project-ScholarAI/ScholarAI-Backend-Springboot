@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.model.auth;
+package dev.project.scholar_ai.model.core.auth;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

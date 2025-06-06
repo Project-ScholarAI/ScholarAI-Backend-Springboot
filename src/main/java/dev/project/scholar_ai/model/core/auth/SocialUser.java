@@ -1,7 +1,6 @@
-package dev.project.scholar_ai.model.auth;
+package dev.project.scholar_ai.model.core.auth;
 
 import jakarta.persistence.*;
-
 import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
@@ -26,5 +25,4 @@ public class SocialUser {
 
     @OneToMany(mappedBy = "socialUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserProvider> providers;
-
 }

@@ -1,6 +1,6 @@
-package dev.project.scholar_ai.repository.auth;
+package dev.project.scholar_ai.repository.core.auth;
 
-import dev.project.scholar_ai.model.auth.SocialUser;
+import dev.project.scholar_ai.model.core.auth.SocialUser;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

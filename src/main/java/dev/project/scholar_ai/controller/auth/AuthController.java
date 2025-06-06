@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.security.Principal;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +44,6 @@ public class AuthController {
                             HttpStatus.BAD_REQUEST.value(), "Registration failed: " + e.getMessage(), null));
         }
     }
-
 
     // login registered user
     @PostMapping("/login")
@@ -116,7 +114,6 @@ public class AuthController {
         }
     }
 
-
     // logout user
     @PostMapping("/logout")
     public ResponseEntity<APIResponse<String>> logout(
@@ -156,7 +153,6 @@ public class AuthController {
         }
     }
 
-
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
             @RequestParam String email, @RequestParam String code, @RequestParam String newPassword) {
@@ -168,6 +164,4 @@ public class AuthController {
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
         }
     }
-
-
 }

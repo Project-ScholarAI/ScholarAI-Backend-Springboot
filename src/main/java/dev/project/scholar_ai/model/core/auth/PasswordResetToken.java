@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.model.auth;
+package dev.project.scholar_ai.model.core.auth;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

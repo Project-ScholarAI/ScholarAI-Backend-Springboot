@@ -1,16 +1,14 @@
-package dev.project.scholar_ai.model.auth;
+package dev.project.scholar_ai.model.core.auth;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "user_providers",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "provider"}))
+@Table(name = "user_providers", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "provider"}))
 public class UserProvider {
 
     @Id

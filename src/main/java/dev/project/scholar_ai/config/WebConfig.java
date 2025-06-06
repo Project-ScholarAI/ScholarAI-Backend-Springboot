@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
         log.info("Active CORS Origins from property: {}", (Object) allowedOrigins);
 
         registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins)
+                .allowedOriginPatterns(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)

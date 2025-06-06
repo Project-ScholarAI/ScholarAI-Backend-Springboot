@@ -1,10 +1,10 @@
 package dev.project.scholar_ai.service.auth;
 
 import dev.project.scholar_ai.dto.auth.AuthResponse;
-import dev.project.scholar_ai.model.auth.AuthUser;
-import dev.project.scholar_ai.model.auth.PasswordResetToken;
-import dev.project.scholar_ai.repository.auth.AuthUserRepository;
-import dev.project.scholar_ai.repository.auth.PasswordResetTokenRepository;
+import dev.project.scholar_ai.model.core.auth.AuthUser;
+import dev.project.scholar_ai.model.core.auth.PasswordResetToken;
+import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
+import dev.project.scholar_ai.repository.core.auth.PasswordResetTokenRepository;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +31,6 @@ public class AuthService {
     private final PasswordResetTokenRepository tokenRepository;
     private final EmailService emailService;
 
-
     public Authentication authentication(String email, String password) {
 
         UserDetails userDetails = userLoadingService.loadUserByUsername(email);
@@ -46,7 +45,6 @@ public class AuthService {
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
-
     // register new user
     public void registerUser(String email, String password) {
         if (authUserRepository.findByEmail(email).isPresent()) {
@@ -58,7 +56,6 @@ public class AuthService {
         newUser.setRole("USER"); // Default role
         authUserRepository.save(newUser);
     }
-
 
     // login registered user
     public AuthResponse loginUser(String email, String password) {
@@ -81,7 +78,6 @@ public class AuthService {
 
         return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
     }
-
 
     // refresh access token when access token expires
     public AuthResponse refreshToken(String refreshToken) {
@@ -110,12 +106,10 @@ public class AuthService {
         return new AuthResponse(newAccessToken, newRefreshToken, username, user.getId(), roles);
     }
 
-
     // Logout user
     public void logoutUser(String username) {
         refreshTokenService.deleteRefreshToken(username);
     }
-
 
     // Forgot Password: generate and send reset code
     public void forgotPassword(String email) {
@@ -140,7 +134,6 @@ public class AuthService {
         emailService.sendResetCode(email, code);
     }
 
-
     // Reset Password: verify code and update password
     public void resetPassword(String email, String code, String newPassword) {
         AuthUser user = authUserRepository
@@ -160,6 +153,4 @@ public class AuthService {
 
         tokenRepository.delete(token); // Cleanup used token
     }
-
-
 }
