@@ -8,30 +8,52 @@ spring:
   app:
     jwtSecret: ${JWT_SECRET:your_jwt_secret_here}
     access:
-      expiration-ms: 900000 #15min
+      expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:6000}  # 60,0000 milliseconds = 15 minute
     refresh:
-      expiration-ms: 604800000 #7day
+      expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} #7day
 
+  # ──── Single "datasource" block ────
   datasource:
+    # ─ CORE DB (this remains the "default" DataSource) ─
     url: jdbc:postgresql://localhost:5433/coreDB
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    username: ${CORE_DB_USER}
+    password: ${CORE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       minimum-idle: 3
       maximum-pool-size: 10
 
+    # ─ PAPER DB (nested under the same "datasource" key) ─
+    paper:
+      url: jdbc:postgresql://localhost:5434/paperDB
+      username: ${PAPER_DB_USER}
+      password: ${PAPER_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        minimum-idle: 3
+        maximum-pool-size: 10
+
+  # ──── JPA for "coreDB" (unchanged) ────
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-        globally_quoted_identifiers: true
-        hbm2ddl.auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+  # ──── Redis, RabbitMQ, JWT, CORS, etc. ────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2000
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -39,10 +61,13 @@ spring:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
 
-  redis:
-    host: core-redis
-    port: 6379
-    password: ${REDIS_PASSWORD}
+  google:
+    client-id: ${SPRING_GOOGLE_CLIENT_ID}
+    client-secret: ${SPRING_GOOGLE_CLIENT_SECRET}
+  github:
+    client-id: ${SPRING_GITHUB_CLIENT_ID}
+    client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/callback
 
 server:
   port: 8080
@@ -59,8 +84,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,prometheus,metrics"
-      base-path: "/actuator"
+        include: health,info,prometheus,metrics
+      base-path: /actuator
   endpoint:
     health:
       show-details: always
@@ -79,6 +104,8 @@ springdoc:
     enabled: true
   show-actuator: true
   use-management-port: false
+  swagger-ui:
+    path: /docs
 
 resilience4j:
   ratelimiter:
@@ -107,6 +134,11 @@ scholarai:
       routing-key: scholarai.paper.fetch
       completed-queue: scholarai.paper.fetch.completed.queue
       completed-routing-key: scholarai.paper.fetch.completed
+    web-search:
+      queue: scholarai.websearch.queue
+      routing-key: scholarai.websearch
+      completed-queue: scholarai.websearch.completed.queue
+      completed-routing-key: scholarai.websearch.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization
@@ -118,6 +150,5 @@ scholarai:
       completed-queue: scholarai.gap.completed.queue
       completed-routing-key: scholarai.gap.completed
 
-# CORS Configuration
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://scholarAI.tech,https://*.vercel.app}

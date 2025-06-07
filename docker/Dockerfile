@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -B -ntp dependency:go-offline
 FROM deps AS build
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -ntp spotless:apply verify -DskipITs=false
+  mvn -B -ntp spotless:apply verify -DskipITs=false
 
 ###############################################################################
 # 3️⃣  Runtime stage (Sonar-clean)

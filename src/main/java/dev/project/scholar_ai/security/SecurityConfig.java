@@ -1,5 +1,7 @@
 package dev.project.scholar_ai.security;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -42,28 +44,28 @@ public class SecurityConfig {
      * @throws Exception If an error occurs during configuration.
      */
     @Bean
-    @SuppressWarnings("java:S4502") // Disabling CSRF for stateless JWT endpoints is safe
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers(
-                        "/api/test/test",
-                        "/api/v1/auth/login",
-                        "/api/v1/auth/register",
-                        "/api/v1/auth/refresh",
-                        "/actuator/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**")
-                .permitAll()
-                .anyRequest()
-                .authenticated());
-
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
-        http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**")); // Only disable CSRF for API endpoints
-
-        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors(withDefaults()) // Enable CORS here
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers(
+                                "/api/test/test",
+                                "/api/papers/**",
+                                "/api/v1/auth/**",
+                                "/api/v1/auth/social/**",
+                                "/api/v1/websearch/**",
+                                "/actuator/**",
+                                "/docs",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**"))
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

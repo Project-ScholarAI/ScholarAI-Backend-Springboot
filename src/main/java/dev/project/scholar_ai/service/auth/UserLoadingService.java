@@ -1,7 +1,7 @@
 package dev.project.scholar_ai.service.auth;
 
-import dev.project.scholar_ai.model.auth.AuthUser;
-import dev.project.scholar_ai.repository.auth.AuthUserRepository;
+import dev.project.scholar_ai.model.core.auth.AuthUser;
+import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "transactionManager")
 public class UserLoadingService implements UserDetailsService {
 
     private final AuthUserRepository authUserRepository;
