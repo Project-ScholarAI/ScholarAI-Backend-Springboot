@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.dto.agentRequests;
+package dev.project.scholar_ai.dto.agent.request;
 
 import java.util.List;
 import java.util.UUID;

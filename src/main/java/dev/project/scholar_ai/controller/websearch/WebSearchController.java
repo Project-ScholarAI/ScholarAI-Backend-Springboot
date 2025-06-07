@@ -1,9 +1,7 @@
-package dev.project.scholar_ai.controller;
+package dev.project.scholar_ai.controller.websearch;
 
-import dev.project.scholar_ai.dto.agentRequests.SummarizationRequest;
-import dev.project.scholar_ai.dto.common.WebSearchRequestDto;
-import dev.project.scholar_ai.dto.common.WebSearchResponseDto;
-import dev.project.scholar_ai.messaging.publisher.SummarizationRequestSender;
+import dev.project.scholar_ai.dto.agent.request.WebSearchRequestDTO;
+import dev.project.scholar_ai.dto.agent.response.WebSearchResponseDto;
 import dev.project.scholar_ai.service.WebSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,54 +13,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/demo")
+@RequestMapping("/api/v1/websearch")
 @Tag(name = "ScholarAI Demo", description = "Demo endpoints for testing ScholarAI functionality")
-public class DemoController {
+public class WebSearchController {
 
-    private final SummarizationRequestSender summarizationRequestSender;
     private final WebSearchService webSearchService;
 
-    public DemoController(SummarizationRequestSender summarizationRequestSender, WebSearchService webSearchService) {
-        this.summarizationRequestSender = summarizationRequestSender;
+    public WebSearchController(WebSearchService webSearchService) {
         this.webSearchService = webSearchService;
     }
 
-    @PostMapping("/trigger-summarization")
-    @Operation(summary = "Trigger PDF Summarization", description = "Submit a PDF URL for AI-powered summarization")
-    @ApiResponses(
-            value = {
-                @ApiResponse(responseCode = "200", description = "Summarization job submitted successfully"),
-                @ApiResponse(responseCode = "400", description = "Invalid request")
-            })
-    public ResponseEntity<Map<String, Object>> triggerSummarization(@RequestBody Map<String, String> request) {
-        String pdfUrl = request.getOrDefault("pdfUrl", "https://example.com/sample.pdf");
-        UUID paperId = UUID.randomUUID();
-        String correlationId = UUID.randomUUID().toString();
-
-        // Create and send the summarization request
-        SummarizationRequest summarizationRequest = new SummarizationRequest(paperId, pdfUrl, correlationId);
-
-        summarizationRequestSender.send(summarizationRequest);
-
-        return ResponseEntity.ok(Map.of(
-                "message",
-                "Summarization job submitted successfully",
-                "paperId",
-                paperId.toString(),
-                "correlationId",
-                correlationId,
-                "pdfUrl",
-                pdfUrl,
-                "status",
-                "SUBMITTED"));
-    }
-
-    @PostMapping("/websearch")
+    @PostMapping
     @Operation(
             summary = "🔍 Search Academic Papers",
             description =
@@ -80,13 +45,13 @@ public class DemoController {
             @Valid
                     @RequestBody
                     @Parameter(description = "Search parameters including query terms, domain, and batch size")
-                    WebSearchRequestDto request) {
+                    WebSearchRequestDTO request) {
 
         WebSearchResponseDto response = webSearchService.initiateWebSearch(request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/websearch/{correlationId}")
+    @GetMapping("/{correlationId}")
     @Operation(
             summary = "📄 Get Search Results",
             description = "Retrieve the results of a web search using the correlation ID. "
@@ -111,7 +76,7 @@ public class DemoController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/websearch")
+    @GetMapping
     @Operation(
             summary = "📚 Get All Search Results",
             description =
@@ -129,6 +94,6 @@ public class DemoController {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
                 "service", "ScholarAI Demo Controller",
-                "features", "WebSearch, Summarization"));
+                "features", "WebSearch"));
     }
 }

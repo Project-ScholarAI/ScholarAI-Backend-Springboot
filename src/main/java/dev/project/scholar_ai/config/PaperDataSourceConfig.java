@@ -32,7 +32,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @AutoConfigureAfter(HibernateJpaAutoConfiguration.class)
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = "dev.project.scholar_ai.repository.paper", entityManagerFactoryRef = "paperEntityManagerFactory", transactionManagerRef = "paperTransactionManager")
+@EnableJpaRepositories(
+        basePackages = "dev.project.scholar_ai.repository.paper",
+        entityManagerFactoryRef = "paperEntityManagerFactory",
+        transactionManagerRef = "paperTransactionManager")
 public class PaperDataSourceConfig {
 
     /**

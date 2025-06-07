@@ -1,5 +1,6 @@
-package dev.project.scholar_ai.dto.common;
+package dev.project.scholar_ai.dto.agent.response;
 
+import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,4 +20,5 @@ public record WebSearchResponseDto(
         @Schema(description = "Timestamp when search was initiated") LocalDateTime submittedAt,
         @Schema(description = "Message about the operation", example = "Web search job submitted successfully")
                 String message,
-        @Schema(description = "List of papers found (populated when search completes)") List<PaperDetailsDto> papers) {}
+        @Schema(description = "List of papers found (populated when search completes)")
+                List<PaperMetadataDto> papers) {}

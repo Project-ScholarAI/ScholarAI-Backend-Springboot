@@ -1,35 +1,39 @@
 package dev.project.scholar_ai.service;
 
-import dev.project.scholar_ai.dto.agentRequests.WebSearchRequest;
-import dev.project.scholar_ai.dto.common.AuthorDetailsDto;
-import dev.project.scholar_ai.dto.common.PaperDetailsDto;
-import dev.project.scholar_ai.dto.common.WebSearchRequestDto;
-import dev.project.scholar_ai.dto.common.WebSearchResponseDto;
-import dev.project.scholar_ai.dto.event.AuthorInfo;
-import dev.project.scholar_ai.dto.event.EnhancedPaperMetadata;
+import dev.project.scholar_ai.dto.agent.request.WebSearchRequest;
+import dev.project.scholar_ai.dto.agent.request.WebSearchRequestDTO;
+import dev.project.scholar_ai.dto.agent.response.WebSearchResponseDto;
 import dev.project.scholar_ai.dto.event.WebSearchCompletedEvent;
+import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
 import dev.project.scholar_ai.messaging.publisher.WebSearchRequestSender;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class WebSearchService {
 
     private final WebSearchRequestSender webSearchRequestSender;
     private final Map<String, WebSearchResponseDto> searchResults = new ConcurrentHashMap<>();
 
-    public WebSearchService(WebSearchRequestSender webSearchRequestSender) {
-        this.webSearchRequestSender = webSearchRequestSender;
-    }
-
-    public WebSearchResponseDto initiateWebSearch(WebSearchRequestDto requestDto) {
+    public WebSearchResponseDto initiateWebSearch(WebSearchRequestDTO requestDto) {
         UUID projectId = UUID.randomUUID();
         String correlationId = UUID.randomUUID().toString();
+
+        log.info(
+                "Initiating web search - Project ID: {}, Correlation ID: {}, Query: {}, Domain: {}, Batch Size: {}",
+                projectId,
+                correlationId,
+                requestDto.queryTerms(),
+                requestDto.domain(),
+                requestDto.batchSize());
 
         // Create and send the web search request
         WebSearchRequest webSearchRequest = new WebSearchRequest(
@@ -60,10 +64,11 @@ public class WebSearchService {
         String correlationId = event.correlationId();
         WebSearchResponseDto existingResponse = searchResults.get(correlationId);
 
+        log.debug("Updating search results for correlation ID: {}", correlationId);
+
         if (existingResponse != null) {
-            // Convert papers to DTOs
-            List<PaperDetailsDto> paperDtos =
-                    event.papers().stream().map(this::convertToPaperDto).collect(Collectors.toList());
+            // Use papers directly without conversion
+            List<PaperMetadataDto> papers = event.papers();
 
             // Update the response with papers
             WebSearchResponseDto updatedResponse = new WebSearchResponseDto(
@@ -74,10 +79,13 @@ public class WebSearchService {
                     existingResponse.batchSize(),
                     "COMPLETED",
                     existingResponse.submittedAt(),
-                    String.format("Web search completed successfully! Found %d papers.", paperDtos.size()),
-                    paperDtos);
+                    String.format("Web search completed successfully! Found %d papers.", papers.size()),
+                    papers);
 
             searchResults.put(correlationId, updatedResponse);
+            log.info("Updated search results for correlation ID: {} with {} papers", correlationId, papers.size());
+        } else {
+            log.warn("No existing search response found for correlation ID: {}", correlationId);
         }
     }
 
@@ -87,36 +95,5 @@ public class WebSearchService {
 
     public List<WebSearchResponseDto> getAllSearchResults() {
         return List.copyOf(searchResults.values());
-    }
-
-    private PaperDetailsDto convertToPaperDto(EnhancedPaperMetadata paper) {
-        List<AuthorDetailsDto> authorDtos = paper.authors() != null
-                ? paper.authors().stream().map(this::convertToAuthorDto).collect(Collectors.toList())
-                : List.of();
-
-        return new PaperDetailsDto(
-                paper.title(),
-                paper.doi(),
-                paper.publicationDate(),
-                paper.venueName(),
-                paper.publisher(),
-                paper.peerReviewed(),
-                authorDtos,
-                paper.citationCount(),
-                paper.codeRepositoryUrl(),
-                paper.datasetUrl(),
-                paper.paperUrl(),
-                paper.pdfUrl(), // PDF download URL
-                "Multi-Source", // Default source
-                null // Abstract not available in current structure
-                );
-    }
-
-    private AuthorDetailsDto convertToAuthorDto(AuthorInfo author) {
-        return new AuthorDetailsDto(
-                author.name(),
-                null, // Affiliation not available in current structure
-                null // Email not available in current structure
-                );
     }
 }

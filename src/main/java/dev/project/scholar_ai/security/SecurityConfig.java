@@ -52,7 +52,7 @@ public class SecurityConfig {
                                 "/api/papers/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/auth/social/**",
-                                "/api/demo/**",
+                                "/api/v1/websearch/**",
                                 "/actuator/**",
                                 "/docs",
                                 "/swagger-ui/**",
@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/demo/**", "/api/papers/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**"))
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

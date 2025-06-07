@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.dto.common;
+package dev.project.scholar_ai.dto.agent.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Schema(description = "Request to trigger web search for academic papers")
-public record WebSearchRequestDto(
+public record WebSearchRequestDTO(
         @Schema(
                         description = "Search terms/keywords for finding papers",
                         example = "[\"machine learning\", \"neural networks\", \"optimization\"]")
