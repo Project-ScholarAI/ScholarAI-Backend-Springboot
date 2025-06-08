@@ -2,7 +2,7 @@ package dev.project.scholar_ai.controller.websearch;
 
 import dev.project.scholar_ai.dto.agent.request.WebSearchRequestDTO;
 import dev.project.scholar_ai.dto.agent.response.WebSearchResponseDto;
-import dev.project.scholar_ai.service.WebSearchService;
+import dev.project.scholar_ai.service.websearch.WebSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

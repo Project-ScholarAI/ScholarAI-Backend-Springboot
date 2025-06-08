@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.service;
+package dev.project.scholar_ai.service.websearch;
 
 import dev.project.scholar_ai.dto.agent.request.WebSearchRequest;
 import dev.project.scholar_ai.dto.agent.request.WebSearchRequestDTO;

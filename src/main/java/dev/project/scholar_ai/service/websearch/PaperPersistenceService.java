@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.service;
+package dev.project.scholar_ai.service.websearch;
 
 import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
 import dev.project.scholar_ai.mapping.paper.PaperMapper;

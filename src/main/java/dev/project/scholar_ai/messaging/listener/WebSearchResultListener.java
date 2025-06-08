@@ -1,8 +1,8 @@
 package dev.project.scholar_ai.messaging.listener;
 
 import dev.project.scholar_ai.dto.event.WebSearchCompletedEvent;
-import dev.project.scholar_ai.service.PaperPersistenceService;
-import dev.project.scholar_ai.service.WebSearchService;
+import dev.project.scholar_ai.service.websearch.PaperPersistenceService;
+import dev.project.scholar_ai.service.websearch.WebSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

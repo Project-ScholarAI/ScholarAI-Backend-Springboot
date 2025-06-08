@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.service;
+package dev.project.scholar_ai.service.websearch;
 
 import dev.project.scholar_ai.model.paper.metadata.Paper;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
