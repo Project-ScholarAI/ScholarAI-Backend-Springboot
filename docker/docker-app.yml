@@ -1,5 +1,5 @@
 services:
-  core:
+  core-app:
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -20,19 +20,15 @@ services:
           memory: 256M
     restart: unless-stopped
     networks:
-      - scholar-network
+      - scholar_network_alias
     env_file:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=${ENV}
 
-    # ✅ Add this block to ensure dependency check
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+networks:
+  scholar_network_alias:
+    name: docker_scholar-network
+    external: true        
 
 
