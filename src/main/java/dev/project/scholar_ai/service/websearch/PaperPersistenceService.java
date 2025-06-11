@@ -1,9 +1,11 @@
-package dev.project.scholar_ai.service;
+package dev.project.scholar_ai.service.websearch;
 
 import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
 import dev.project.scholar_ai.mapping.paper.PaperMapper;
 import dev.project.scholar_ai.model.paper.metadata.Paper;
+import dev.project.scholar_ai.repository.core.websearch.WebSearchOperationRepository;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +20,17 @@ public class PaperPersistenceService {
 
     private final PaperRepository paperRepository;
     private final PaperMapper paperMapper;
+    private final WebSearchOperationRepository webSearchOperationRepository;
 
     @Transactional(transactionManager = "paperTransactionManager")
-    public List<Paper> savePapers(List<PaperMetadataDto> paperDtos, UUID projectId) {
-        log.info("Persisting {} papers for project {}", paperDtos.size(), projectId);
+    public List<Paper> savePapers(List<PaperMetadataDto> paperDtos, String correlationId) {
+        log.info("Persisting {} papers for correlation ID {}", paperDtos.size(), correlationId);
 
         return paperDtos.stream()
                 .map(dto -> {
                     try {
                         Paper paper = paperMapper.toEntity(dto);
-                        paper.setProjectId(projectId);
+                        paper.setCorrelationId(correlationId);
 
                         // Set bidirectional relationships
                         if (paper.getAuthors() != null) {
@@ -64,15 +67,40 @@ public class PaperPersistenceService {
     }
 
     @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
+    public List<Paper> findPapersByCorrelationId(String correlationId) {
+        log.debug("Finding papers for correlation ID {}", correlationId);
+        return paperRepository.findByCorrelationId(correlationId);
+    }
+
+    @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
+    public List<PaperMetadataDto> findPaperDtosByCorrelationId(String correlationId) {
+        log.debug("Finding paper DTOs for correlation ID {}", correlationId);
+        List<Paper> papers = paperRepository.findByCorrelationId(correlationId);
+        return papers.stream().map(paperMapper::toDto).toList();
+    }
+
+    @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
     public List<Paper> findPapersByProjectId(UUID projectId) {
         log.debug("Finding papers for project {}", projectId);
-        return paperRepository.findByProjectId(projectId);
+
+        // Get all correlation IDs for this project from WebSearchOperations
+        List<String> correlationIds =
+                webSearchOperationRepository.findByProjectIdOrderBySubmittedAtDesc(projectId).stream()
+                        .map(operation -> operation.getCorrelationId())
+                        .toList();
+
+        if (correlationIds.isEmpty()) {
+            log.debug("No web search operations found for project {}", projectId);
+            return Collections.emptyList();
+        }
+
+        return paperRepository.findByCorrelationIdIn(correlationIds);
     }
 
     @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
     public List<PaperMetadataDto> findPaperDtosByProjectId(UUID projectId) {
         log.debug("Finding paper DTOs for project {}", projectId);
-        List<Paper> papers = paperRepository.findByProjectId(projectId);
+        List<Paper> papers = findPapersByProjectId(projectId);
         return papers.stream().map(paperMapper::toDto).toList();
     }
 }

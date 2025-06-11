@@ -5,10 +5,16 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "Request to trigger web search for academic papers")
 public record WebSearchRequestDTO(
+        @Schema(
+                        description = "Project ID that this search belongs to",
+                        example = "123e4567-e89b-12d3-a456-426614174000")
+                @NotNull(message = "Project ID cannot be null") UUID projectId,
         @Schema(
                         description = "Search terms/keywords for finding papers",
                         example = "[\"machine learning\", \"neural networks\", \"optimization\"]")

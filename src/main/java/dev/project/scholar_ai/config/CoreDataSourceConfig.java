@@ -1,6 +1,8 @@
 package dev.project.scholar_ai.config;
 
 import jakarta.persistence.EntityManagerFactory;
+import java.util.HashMap;
+import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -43,7 +45,21 @@ public class CoreDataSourceConfig {
         factory.setDataSource(dataSource);
         factory.setPackagesToScan("dev.project.scholar_ai.model.core");
         factory.setPersistenceUnitName("core");
-        factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        vendorAdapter.setDatabasePlatform("org.hibernate.dialect.PostgreSQLDialect");
+        vendorAdapter.setShowSql(true);
+        factory.setJpaVendorAdapter(vendorAdapter);
+
+        // Set JPA properties manually based on application-dev.yml configuration
+        Map<String, Object> jpaPropertiesMap = new HashMap<>();
+        jpaPropertiesMap.put("hibernate.hbm2ddl.auto", "update");
+        jpaPropertiesMap.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        jpaPropertiesMap.put("hibernate.show_sql", true);
+        jpaPropertiesMap.put("hibernate.format_sql", true);
+        jpaPropertiesMap.put("hibernate.use_sql_comments", true);
+
+        factory.setJpaPropertyMap(jpaPropertiesMap);
 
         return factory;
     }

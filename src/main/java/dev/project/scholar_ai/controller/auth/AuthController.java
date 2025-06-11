@@ -2,7 +2,6 @@ package dev.project.scholar_ai.controller.auth;
 
 import dev.project.scholar_ai.dto.auth.AuthDTO;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
-import dev.project.scholar_ai.dto.auth.RefreshTokenRequest;
 import dev.project.scholar_ai.dto.common.APIResponse;
 import dev.project.scholar_ai.service.auth.AuthService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -63,8 +62,10 @@ public class AuthController {
 
             response.addCookie(refreshCookie);
 
-            // remove refresh token from body before sending
-            authResponse.setRefreshToken(null);
+            // Note: Refresh token is stored securely in HttpOnly cookie
+            // For development/testing, you can keep it in response by commenting the next
+            // line
+            // authResponse.setRefreshToken(null);
 
             logger.info("response cookie added , authResponse: ", authResponse);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
@@ -82,7 +83,7 @@ public class AuthController {
     // refresh access token when access token expires
     @PostMapping("/refresh")
     public ResponseEntity<APIResponse<AuthResponse>> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest refreshRequest, HttpServletRequest request) {
+            HttpServletRequest request, HttpServletResponse response) {
         try {
             logger.info("refresh endpoint hitted");
 
@@ -101,7 +102,19 @@ public class AuthController {
                 throw new BadCredentialsException("Missing refresh token");
             }
 
-            AuthResponse refreshed = authService.refreshToken(refreshRequest.getRefreshToken());
+            AuthResponse refreshed = authService.refreshToken(refreshToken);
+
+            // Set new refresh token in cookie
+            Cookie refreshCookie = new Cookie("refreshToken", refreshed.getRefreshToken());
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setSecure(false); // for local testing
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+            response.addCookie(refreshCookie);
+
+            // Remove refresh token from response body
+            refreshed.setRefreshToken(null);
+
             return ResponseEntity.ok(
                     APIResponse.success(HttpStatus.OK.value(), "Token refreshed successfully", refreshed));
         } catch (BadCredentialsException e) {

@@ -22,6 +22,6 @@ public class UserProvider {
     @Column(nullable = false)
     private String provider; // e.g., "GOOGLE", "GITHUB"
 
-    @Column(nullable = false)
+    @Column(nullable = true) // Temporarily nullable for migration
     private String providerId; // e.g., Google sub or GitHub ID
 }
