@@ -31,7 +31,7 @@ public class WebSearchResultListener {
             webSearchService.updateSearchResults(event);
 
             // Persist papers to database
-            paperPersistenceService.savePapers(event.papers(), event.projectId());
+            paperPersistenceService.savePapers(event.papers(), event.correlationId());
 
             // Log summary of processed papers
             event.papers().forEach(paper -> {

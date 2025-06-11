@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PaperRepository extends JpaRepository<Paper, UUID> {
 
-    List<Paper> findByProjectId(UUID projectId);
+    List<Paper> findByCorrelationId(String correlationId);
+
+    List<Paper> findByCorrelationIdIn(List<String> correlationIds);
 
     List<Paper> findByTitleContainingIgnoreCase(String title);
 

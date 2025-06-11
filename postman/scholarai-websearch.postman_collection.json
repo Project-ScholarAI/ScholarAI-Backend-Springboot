@@ -1,0 +1,643 @@
+{
+    "info": {
+        "name": "ScholarAI Web Search API",
+        "_postman_id": "f8b9c2e1-3d4a-4b6c-9e8f-123456789abc",
+        "description": "Web Search API for academic papers with multiple sources (Semantic Scholar, arXiv, Crossref, PubMed). Search for papers and retrieve full metadata including authors, abstracts, citations, and more.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": {
+            "major": 1,
+            "minor": 0,
+            "patch": 0
+        }
+    },
+    "item": [
+        {
+            "name": "Search Academic Papers",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has APIResponse structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('timestamp');",
+                            "    pm.expect(jsonData).to.have.property('status');",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('data');",
+                            "});",
+                            "",
+                            "pm.test(\"Search initiated successfully\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.status).to.eql(200);",
+                            "    pm.expect(jsonData.data).to.have.property('correlationId');",
+                            "    pm.expect(jsonData.data).to.have.property('projectId');",
+                            "    ",
+                            "    // Store correlation ID for use in other requests",
+                            "    pm.environment.set('correlationId', jsonData.data.correlationId);",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer YOUR_JWT_TOKEN_HERE",
+                        "description": "Optional: Add JWT token if authentication is required"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"queryTerms\": [\"machine learning\", \"neural networks\", \"deep learning\"],\n  \"domain\": \"Computer Science\",\n  \"batchSize\": 10\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch"
+                    ]
+                },
+                "description": "Initiate a search for academic papers across multiple sources. Returns a correlation ID to track the search progress and retrieve results."
+            },
+            "response": [
+                {
+                    "name": "Search Initiated Successfully",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"projectId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"queryTerms\": [\"machine learning\", \"neural networks\"],\n  \"domain\": \"Computer Science\",\n  \"batchSize\": 10\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:30:45\",\n  \"status\": 200,\n  \"message\": \"Web search initiated successfully. Use the correlation ID to retrieve results.\",\n  \"data\": {\n    \"projectId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"correlationId\": \"corr-123-456\",\n    \"queryTerms\": [\"machine learning\", \"neural networks\"],\n    \"domain\": \"Computer Science\",\n    \"batchSize\": 10,\n    \"status\": \"SUBMITTED\",\n    \"submittedAt\": \"2024-01-15T14:30:45\",\n    \"message\": \"Web search job submitted successfully. Results will be available shortly.\",\n    \"papers\": []\n  }\n}"
+                }
+            ]
+        },
+        {
+            "name": "Get Search Results by Correlation ID",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has APIResponse structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('timestamp');",
+                            "    pm.expect(jsonData).to.have.property('status');",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('data');",
+                            "});",
+                            "",
+                            "pm.test(\"Search results structure is valid\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data).to.have.property('papers');",
+                            "    pm.expect(jsonData.data.papers).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"If papers are found, they have complete metadata\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    if (jsonData.data.papers.length > 0) {",
+                            "        var paper = jsonData.data.papers[0];",
+                            "        pm.expect(paper).to.have.property('title');",
+                            "        pm.expect(paper).to.have.property('authors');",
+                            "        pm.expect(paper).to.have.property('abstractText');",
+                            "        pm.expect(paper).to.have.property('publicationDate');",
+                            "        pm.expect(paper).to.have.property('doi');",
+                            "        pm.expect(paper).to.have.property('citationCount');",
+                            "    }",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer YOUR_JWT_TOKEN_HERE",
+                        "description": "Optional: Add JWT token if authentication is required"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch/{{correlationId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch",
+                        "{{correlationId}}"
+                    ]
+                },
+                "description": "Retrieve search results using the correlation ID. Returns full paper metadata including authors, abstracts, citations, and PDF URLs when available."
+            },
+            "response": [
+                {
+                    "name": "Search Completed with Results",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch/corr-123-456",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch",
+                                "corr-123-456"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:32:15\",\n  \"status\": 200,\n  \"message\": \"Search completed successfully! Found 5 papers with full metadata.\",\n  \"data\": {\n    \"projectId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"correlationId\": \"corr-123-456\",\n    \"queryTerms\": [\"machine learning\", \"neural networks\"],\n    \"domain\": \"Computer Science\",\n    \"batchSize\": 10,\n    \"status\": \"COMPLETED\",\n    \"submittedAt\": \"2024-01-15T14:30:45\",\n    \"message\": \"Web search completed successfully! Found 5 papers.\",\n    \"papers\": [\n      {\n        \"title\": \"Deep Learning for Natural Language Processing\",\n        \"abstractText\": \"This paper presents a comprehensive survey of deep learning techniques...\",\n        \"authors\": [\n          {\n            \"name\": \"Dr. Jane Smith\",\n            \"authorId\": \"2109704538\",\n            \"orcid\": \"0000-0002-1825-0097\",\n            \"affiliation\": \"Stanford University\"\n          }\n        ],\n        \"publicationDate\": \"2023-05-15\",\n        \"doi\": \"10.1145/3449301.3449302\",\n        \"semanticScholarId\": \"abc123def456\",\n        \"source\": \"Semantic Scholar\",\n        \"citationCount\": 245,\n        \"referenceCount\": 78,\n        \"influentialCitationCount\": 23,\n        \"venueName\": \"Nature Machine Intelligence\",\n        \"isOpenAccess\": true,\n        \"pdfUrl\": \"https://arxiv.org/pdf/2305.12345.pdf\"\n      }\n    ]\n  }\n}"
+                },
+                {
+                    "name": "Search Not Found",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch/invalid-correlation-id",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch",
+                                "invalid-correlation-id"
+                            ]
+                        }
+                    },
+                    "status": "Not Found",
+                    "code": 404,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:35:20\",\n  \"status\": 404,\n  \"message\": \"Search not found for correlation ID: invalid-correlation-id\",\n  \"data\": null\n}"
+                }
+            ]
+        },
+        {
+            "name": "Get All Search Results",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has APIResponse structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('timestamp');",
+                            "    pm.expect(jsonData).to.have.property('status');",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('data');",
+                            "});",
+                            "",
+                            "pm.test(\"Data contains array of search results\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"Message includes search statistics\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include('search operations');",
+                            "    pm.expect(jsonData.message).to.include('total papers');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer YOUR_JWT_TOKEN_HERE",
+                        "description": "Optional: Add JWT token if authentication is required"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch"
+                    ]
+                },
+                "description": "Retrieve all web search results with full paper metadata. Shows history of searches and their current status."
+            },
+            "response": [
+                {
+                    "name": "All Search Results Retrieved",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:40:30\",\n  \"status\": 200,\n  \"message\": \"Retrieved 3 search operations with 15 total papers\",\n  \"data\": [\n    {\n      \"projectId\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"correlationId\": \"corr-123-456\",\n      \"queryTerms\": [\"machine learning\", \"neural networks\"],\n      \"domain\": \"Computer Science\",\n      \"batchSize\": 10,\n      \"status\": \"COMPLETED\",\n      \"submittedAt\": \"2024-01-15T14:30:45\",\n      \"message\": \"Web search completed successfully! Found 5 papers.\",\n      \"papers\": []\n    }\n  ]\n}"
+                }
+            ]
+        },
+        {
+            "name": "Health Check",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Service is healthy\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data.status).to.eql('UP');",
+                            "    pm.expect(jsonData.data.service).to.eql('Web Search Service');",
+                            "});",
+                            "",
+                            "pm.test(\"Health response includes service info\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data).to.have.property('features');",
+                            "    pm.expect(jsonData.data).to.have.property('version');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch",
+                        "health"
+                    ]
+                },
+                "description": "Check if the web search service is running and operational. Returns service status and features."
+            },
+            "response": [
+                {
+                    "name": "Service Healthy",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch/health",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch",
+                                "health"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:45:10\",\n  \"status\": 200,\n  \"message\": \"Web search service is healthy and operational\",\n  \"data\": {\n    \"status\": \"UP\",\n    \"service\": \"Web Search Service\",\n    \"features\": \"Academic Paper Search (Semantic Scholar, arXiv, Crossref, PubMed)\",\n    \"version\": \"v1.0\"\n  }\n}"
+                }
+            ]
+        },
+        {
+            "name": "Search with Large Batch",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Large batch search initiated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data.batchSize).to.eql(50);",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"queryTerms\": [\"artificial intelligence\", \"computer vision\", \"natural language processing\"],\n  \"domain\": \"Computer Science\",\n  \"batchSize\": 50\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch"
+                    ]
+                },
+                "description": "Test searching with maximum batch size (50 papers) across multiple query terms."
+            },
+            "response": []
+        },
+        {
+            "name": "Search Medical Papers",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Medical domain search initiated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.data.domain).to.eql('Medicine');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"queryTerms\": [\"COVID-19\", \"vaccine efficacy\", \"clinical trials\"],\n  \"domain\": \"Medicine\",\n  \"batchSize\": 20\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch"
+                    ]
+                },
+                "description": "Test searching for medical research papers related to COVID-19 and vaccines."
+            },
+            "response": []
+        },
+        {
+            "name": "Invalid Search Request - No Query Terms",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 400\", function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});",
+                            "",
+                            "pm.test(\"Error response structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('timestamp');",
+                            "    pm.expect(jsonData).to.have.property('status');",
+                            "    pm.expect(jsonData.status).to.eql(400);",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"queryTerms\": [],\n  \"domain\": \"Computer Science\",\n  \"batchSize\": 10\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/websearch",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "websearch"
+                    ]
+                },
+                "description": "Test validation error when no query terms are provided."
+            },
+            "response": [
+                {
+                    "name": "Validation Error - Empty Query Terms",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"projectId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"queryTerms\": [],\n  \"domain\": \"Computer Science\",\n  \"batchSize\": 10\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:8080/api/v1/websearch",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "api",
+                                "v1",
+                                "websearch"
+                            ]
+                        }
+                    },
+                    "status": "Bad Request",
+                    "code": 400,
+                    "_postman_previewlanguage": "json",
+                    "header": [
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ],
+                    "cookie": [],
+                    "body": "{\n  \"timestamp\": \"2024-01-15 14:50:30\",\n  \"status\": 400,\n  \"message\": \"Failed to initiate web search: Query terms cannot be empty\",\n  \"data\": null\n}"
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080",
+            "description": "Base URL for the ScholarAI API"
+        },
+        {
+            "key": "correlationId",
+            "value": "",
+            "description": "Correlation ID from search request - automatically set by test scripts"
+        },
+        {
+            "key": "projectId",
+            "value": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Project ID for web search operations - update with your actual project ID"
+        }
+    ]
+}

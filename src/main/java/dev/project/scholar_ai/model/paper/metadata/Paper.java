@@ -24,9 +24,9 @@ public class Paper {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Project reference - each paper belongs to a project
-    @Column(name = "project_id", nullable = false)
-    private UUID projectId;
+    // Correlation ID reference - each paper belongs to a search operation
+    @Column(name = "correlation_id", nullable = false, length = 100)
+    private String correlationId;
 
     // Core Fields
     @Column(nullable = false, length = 500)
