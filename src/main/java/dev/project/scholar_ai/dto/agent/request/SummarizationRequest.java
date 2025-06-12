@@ -1,5 +1,13 @@
 package dev.project.scholar_ai.dto.agent.request;
 
+import java.util.List;
 import java.util.UUID;
 
-public record SummarizationRequest(UUID paperId, String pdfUrl, String correlationId) {}
+/**
+ * Message payload sent from Spring Boot to the FastAPI summarizer agent.
+ *
+ * @param correlationId  Correlation ID identifying the originating search operation
+ * @param paperIds       List of paper IDs to process. If empty, the agent should process
+ *                       all papers associated with the correlation ID.
+ */
+public record SummarizationRequest(String correlationId, List<UUID> paperIds) {}

@@ -10,6 +10,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import dev.project.scholar_ai.model.paper.content.PaperCitation;
+import dev.project.scholar_ai.model.paper.content.PaperSection;
+import dev.project.scholar_ai.model.paper.content.PaperSummary;
 
 @Getter
 @Setter
@@ -84,6 +87,17 @@ public class Paper {
     @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaperMetrics metrics;
 
+    @OneToMany(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<PaperSection> sections = new ArrayList<>();
+
+    @OneToMany(mappedBy = "citingPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<PaperCitation> citations = new ArrayList<>();
+
+    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private PaperSummary summary;
+
     // Helper methods
     public void addAuthor(Author author) {
         authors.add(author);
@@ -103,5 +117,25 @@ public class Paper {
     public void removeExternalId(ExternalId externalId) {
         externalIds.remove(externalId);
         externalId.setPaper(null);
+    }
+
+    public void addSection(PaperSection section) {
+        sections.add(section);
+        section.setPaper(this);
+    }
+
+    public void removeSection(PaperSection section) {
+        sections.remove(section);
+        section.setPaper(null);
+    }
+
+    public void addCitation(PaperCitation citation) {
+        citations.add(citation);
+        citation.setCitingPaper(this);
+    }
+
+    public void removeCitation(PaperCitation citation) {
+        citations.remove(citation);
+        citation.setCitingPaper(null);
     }
 }
