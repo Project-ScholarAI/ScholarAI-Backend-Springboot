@@ -34,7 +34,7 @@ public class SummarizerService {
         List<UUID> paperIds = papers.stream().map(Paper::getId).toList();
         log.info("Sending summarization request for {} papers (correlationId={})", paperIds.size(), correlationId);
 
-        SummarizationRequest request = new SummarizationRequest(correlationId, paperIds);
+        SummarizationRequest request = new SummarizationRequest(papers.get(0).getId() != null ? null : null, correlationId, paperIds);
         requestSender.send(request);
     }
 } 
