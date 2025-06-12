@@ -84,20 +84,6 @@ public class Paper {
     @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaperMetrics metrics;
 
-    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private dev.project.scholar_ai.model.paper.content.PaperContent content;
-
-    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private dev.project.scholar_ai.model.paper.summary.PaperSummary summary;
-
-    @OneToMany(mappedBy = "citingPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<dev.project.scholar_ai.model.paper.citation.Citation> citationsMade = new ArrayList<>();
-
-    @OneToMany(mappedBy = "citedPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<dev.project.scholar_ai.model.paper.citation.Citation> citationsReceived = new ArrayList<>();
-
     // Helper methods
     public void addAuthor(Author author) {
         authors.add(author);
