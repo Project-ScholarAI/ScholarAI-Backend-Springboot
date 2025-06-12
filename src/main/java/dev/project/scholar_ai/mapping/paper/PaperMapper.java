@@ -22,6 +22,10 @@ public interface PaperMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "correlationId", ignore = true) // Will be set separately
+    @Mapping(target = "content", ignore = true) // Will be set by content extraction
+    @Mapping(target = "summary", ignore = true) // Will be set by summarization
+    @Mapping(target = "citationsMade", ignore = true) // Will be set by citation extraction
+    @Mapping(target = "citationsReceived", ignore = true) // Will be set by citation extraction
     @Mapping(target = "authors", source = "authors", qualifiedByName = "mapAuthors")
     @Mapping(target = "externalIds", source = "externalIds", qualifiedByName = "mapExternalIds")
     @Mapping(target = "venue", source = ".", qualifiedByName = "mapVenue")
