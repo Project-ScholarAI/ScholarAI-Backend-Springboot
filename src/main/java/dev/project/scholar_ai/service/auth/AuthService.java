@@ -144,10 +144,11 @@ public class AuthService {
 
         String encoded = passwordEncoder.encode(newPassword);
         user.setEncryptedPassword(encoded);
-        authUserRepository.save(user);
-        authUserRepository.flush(); // force Hibernate to write to DB
+        authUserRepository.saveAndFlush(user);
 
         System.out.println("After update: " + encoded);
+        System.out.println("User's password after update");
+        System.out.println(user.getEncryptedPassword());
 
         redisTemplate.delete(redisKey);//invalidate used code
         redisTemplate.delete("REFRESH_TOKEN:" + email);
