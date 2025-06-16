@@ -157,9 +157,12 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
+            logger.info("forgot password endpoint hitted with email: ",email);
+
             authService.sendResetCodeByMail(email);
             return ResponseEntity.ok(APIResponse.success(
                     HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null));
@@ -176,6 +179,8 @@ public class AuthController {
             @RequestParam String code,
             @RequestParam String newPassword) {
         try {
+            logger.info("reset-password endpoint hitted with: ", email, " code: ", code," newpass: ", newPassword);
+
             authService.verifyCodeAndResetPassword(email, code, newPassword);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successfully.", null));
         } catch (Exception e) {
