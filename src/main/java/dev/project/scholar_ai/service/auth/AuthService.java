@@ -112,7 +112,15 @@ public class AuthService {
 
     // Forgot Password: generate and send reset code
     public void sendResetCodeByMail(String email) {
-        
+        AuthUser user = authUserRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("No user with that email."));
+
+        String code = String.valueOf((int) ((Math.random() * 900000) + 100000)); // 6-digit code
+        String redisKey = "RESET_CODE:" + email;
+        redisTemplate.opsForValue().set(redisKey, code, Duration.ofMinutes(10)); // expires in 10 min
+
+        //emailService.sendResetCodeByEmail(email, code);
     }
 
     @Transactional(
