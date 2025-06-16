@@ -2,15 +2,13 @@ package dev.project.scholar_ai.service.auth;
 
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
-import dev.project.scholar_ai.model.core.auth.PasswordResetToken;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
-import dev.project.scholar_ai.repository.core.auth.PasswordResetTokenRepository;
 import dev.project.scholar_ai.security.JwtUtils;
-import java.time.LocalDateTime;
+
+import java.time.Duration;
 import java.util.List;
-import java.util.Random;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +28,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
-    private final PasswordResetTokenRepository tokenRepository;
     private final EmailService emailService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public Authentication authentication(String email, String password) {
 
@@ -75,7 +75,6 @@ public class AuthService {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-
         return new AuthResponse(accessToken, refreshToken, userDetails.getUsername(), user.getId(), roles);
     }
 
@@ -112,45 +111,16 @@ public class AuthService {
     }
 
     // Forgot Password: generate and send reset code
-    public void forgotPassword(String email) {
-        AuthUser user = authUserRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("No user with that email."));
-
-        String code = String.format("%06d", new Random().nextInt(999999));
-        LocalDateTime expiry = LocalDateTime.now().plusMinutes(10);
-
-        // Remove existing reset tokens
-        tokenRepository.deleteAllByUser(user);
-
-        // Create new reset token
-        PasswordResetToken token = new PasswordResetToken();
-        token.setUser(user);
-        token.setToken(code);
-        token.setExpiryDate(expiry);
-        tokenRepository.save(token);
-
-        // Send code (real or mocked)
-        emailService.sendResetCode(email, code);
+    public void sendResetCodeByMail(String email) {
+        
     }
 
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            transactionManager = "transactionManager"
+    )
     // Reset Password: verify code and update password
-    public void resetPassword(String email, String code, String newPassword) {
-        AuthUser user = authUserRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("No user with that email."));
+    public void verifyCodeAndResetPassword(String email, String code, String newPassword) {
 
-        PasswordResetToken token = tokenRepository
-                .findByUserAndToken((User) user, code)
-                .orElseThrow(() -> new BadCredentialsException("Invalid or expired code."));
-
-        if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new BadCredentialsException("Code has expired.");
-        }
-
-        user.setEncryptedPassword(passwordEncoder.encode(newPassword));
-        authUserRepository.save(user);
-
-        tokenRepository.delete(token); // Cleanup used token
     }
 }

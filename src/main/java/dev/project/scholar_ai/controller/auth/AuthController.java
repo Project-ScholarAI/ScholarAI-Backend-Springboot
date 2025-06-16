@@ -53,6 +53,8 @@ public class AuthController {
 
             AuthResponse authResponse = authService.loginUser(authDTO.getEmail(), authDTO.getPassword());
 
+            logger.info("got auth response from authService for login request");
+
             // Create secure HttpOnly cookie for refresh token
             Cookie refreshCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
             refreshCookie.setHttpOnly(true); // only over https
@@ -65,7 +67,7 @@ public class AuthController {
             // Note: Refresh token is stored securely in HttpOnly cookie
             // For development/testing, you can keep it in response by commenting the next
             // line
-            // authResponse.setRefreshToken(null);
+             //authResponse.setRefreshToken(null);
 
             logger.info("response cookie added , authResponse: ", authResponse);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
@@ -74,6 +76,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password", null));
         } catch (Exception e) {
+            logger.error("Login error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(APIResponse.error(
                             HttpStatus.INTERNAL_SERVER_ERROR.value(), "Login error: " + e.getMessage(), null));
@@ -157,7 +160,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
-            authService.forgotPassword(email);
+            authService.sendResetCodeByMail(email);
             return ResponseEntity.ok(APIResponse.success(
                     HttpStatus.OK.value(), "Reset code sent to your email if the account exists.", null));
         } catch (Exception e) {
@@ -166,12 +169,15 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
-            @RequestParam String email, @RequestParam String code, @RequestParam String newPassword) {
+            @RequestParam String email,
+            @RequestParam String code,
+            @RequestParam String newPassword) {
         try {
-            authService.resetPassword(email, code, newPassword);
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successful.", null));
+            authService.verifyCodeAndResetPassword(email, code, newPassword);
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successfully.", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
