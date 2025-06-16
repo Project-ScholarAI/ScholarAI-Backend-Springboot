@@ -240,12 +240,18 @@
 			<version>${hyper.version}</version>
 		</dependency>
 
-
 		<!-- Resend -->
 		<dependency>
 			<groupId>com.resend</groupId>
 			<artifactId>resend-java</artifactId>
 			<version>${resend.version}</version>
+		</dependency>
+
+		<!-- send grid -->
+		<dependency>
+			<groupId>com.sendgrid</groupId>
+			<artifactId>sendgrid-java</artifactId>
+			<version>4.9.3</version>
 		</dependency>
 
 		<dependency>
