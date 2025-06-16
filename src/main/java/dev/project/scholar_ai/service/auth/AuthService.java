@@ -120,7 +120,7 @@ public class AuthService {
         String redisKey = "RESET_CODE:" + email;
         redisTemplate.opsForValue().set(redisKey, code, Duration.ofMinutes(10)); // expires in 10 min
 
-        //emailService.sendResetCodeByEmail(email, code);
+        emailService.sendResetCodeByEmail(email, code);
     }
 
     @Transactional(
@@ -129,6 +129,27 @@ public class AuthService {
     )
     // Reset Password: verify code and update password
     public void verifyCodeAndResetPassword(String email, String code, String newPassword) {
+        String redisKey = "RESET_CODE:"+ email;
+        String storedCode = redisTemplate.opsForValue().get(redisKey);
 
+        if(storedCode == null || !storedCode.equals(code)){
+            throw new IllegalArgumentException("Invalid or expired reset code");
+        }
+
+        AuthUser user = authUserRepository.findByEmail(email).orElseThrow(
+                () -> new IllegalArgumentException("User not found by this email!")
+        );
+
+        System.out.println("Before update: " + user.getEncryptedPassword());
+
+        String encoded = passwordEncoder.encode(newPassword);
+        user.setEncryptedPassword(encoded);
+        authUserRepository.save(user);
+        authUserRepository.flush(); // force Hibernate to write to DB
+
+        System.out.println("After update: " + encoded);
+
+        redisTemplate.delete(redisKey);//invalidate used code
+        redisTemplate.delete("REFRESH_TOKEN:" + email);
     }
 }
