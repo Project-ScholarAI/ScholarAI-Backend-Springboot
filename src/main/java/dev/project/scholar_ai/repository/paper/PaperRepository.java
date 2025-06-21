@@ -3,6 +3,7 @@ package dev.project.scholar_ai.repository.paper;
 import dev.project.scholar_ai.model.paper.metadata.Paper;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -32,4 +33,15 @@ public interface PaperRepository extends JpaRepository<Paper, UUID> {
     List<Paper> findByDoi(String doi);
 
     List<Paper> findBySemanticScholarId(String semanticScholarId);
+
+    // New methods for deduplication
+    Optional<Paper> findFirstByDoi(String doi);
+
+    Optional<Paper> findFirstBySemanticScholarId(String semanticScholarId);
+
+    @Query("SELECT p FROM Paper p JOIN p.externalIds e WHERE e.source = :source AND e.value = :value")
+    Optional<Paper> findByExternalId(@Param("source") String source, @Param("value") String value);
+
+    @Query("SELECT p FROM Paper p JOIN p.externalIds e WHERE e.source IN :sources AND e.value IN :values")
+    List<Paper> findByExternalIds(@Param("sources") List<String> sources, @Param("values") List<String> values);
 }
