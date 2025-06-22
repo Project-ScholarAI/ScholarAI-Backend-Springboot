@@ -11,7 +11,7 @@ public class SummarizationResultListener {
     @RabbitListener(
             queues = "${scholarai.rabbitmq.summarization.completed-queue}",
             containerFactory = "listenerFactory")
-    @Transactional
+    @Transactional(transactionManager = "paperTransactionManager")
     public void onSummarizationCompleted(SummarizationCompletedEvent evt) {
         // persist summaryText into your summaries table:
         // summaryRepo.save(evt.paperId(), evt.summaryText());

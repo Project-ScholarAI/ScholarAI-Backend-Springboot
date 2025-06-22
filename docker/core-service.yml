@@ -4,15 +4,35 @@ services:
     container_name: core-db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${CORE_DB_USER}
+      POSTGRES_PASSWORD: ${CORE_DB_PASSWORD}
       POSTGRES_DB: coreDB
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      test: ["CMD", "pg_isready", "-U", "${CORE_DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scholar-network
+
+  paper-db:
+    image: 'postgres:17-alpine'
+    container_name: paper-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${PAPER_DB_USER}
+      POSTGRES_PASSWORD: ${PAPER_DB_PASSWORD}
+      POSTGRES_DB: paperDB
+    volumes:
+      - paper-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${PAPER_DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,6 +79,7 @@ services:
 volumes:
   db-data:
   redis-data:
+  paper-db-data:
 
 networks:
   scholar-network:

@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class GapAnalysisResultListener {
 
     @RabbitListener(queues = "${scholarai.rabbitmq.gap-analysis.completed-queue}", containerFactory = "listenerFactory")
-    @Transactional
+    @Transactional(transactionManager = "paperTransactionManager")
     public void onGapAnalysisCompleted(GapAnalysisCompletedEvent evt) {
         // write identifiedGaps into your gap_analysis table:
         // gapRepo.save(evt.paperId(), evt.identifiedGaps());
 
-        // optionally notify frontend or mark pipeline “done”
+        // optionally notify frontend or mark pipeline "done"
     }
 }

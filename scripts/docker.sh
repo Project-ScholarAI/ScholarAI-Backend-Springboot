@@ -63,7 +63,12 @@ start_stack() {
   echo -e "${CYAN}▶ Starting core services and application...${NC}"
   # shellcheck disable=SC2086
   eval docker compose $COMPOSE_STACK up -d
-  echo -e "${GREEN}✔ Stack is up. API → http://localhost:8080 | RabbitMQ UI → http://localhost:15672${NC}"
+  echo -e "${GREEN}✔ Stack is up.${NC}"
+  echo -e "${GREEN}API → http://localhost:8080${NC}"
+  echo -e "${GREEN}RabbitMQ UI → http://localhost:15672${NC}"
+  echo -e "${GREEN}Core DB (PostgreSQL) → localhost:5433${NC}"
+  echo -e "${GREEN}Paper DB (PostgreSQL) → localhost:5434${NC}"
+  echo -e "${GREEN}Redis → localhost:6379${NC}"
 }
 
 stop_stack() {
@@ -78,8 +83,10 @@ start_services() {
     echo -e "${CYAN}Starting core services...${NC}"
     docker compose -f "$DOCKER_SERVICES" up -d
     echo -e "${GREEN}Core services started.${NC}"
-    echo -e "${GREEN}RabbitMQ management UI should be available at http://localhost:15672 ${NC}"
-    echo -e "${GREEN}Redis should be running on port 6379.${NC}"
+    echo -e "${GREEN}RabbitMQ management UI → http://localhost:15672${NC}"
+    echo -e "${GREEN}Core DB (PostgreSQL) → localhost:5433${NC}"
+    echo -e "${GREEN}Paper DB (PostgreSQL) → localhost:5434${NC}"
+    echo -e "${GREEN}Redis → localhost:6379${NC}"
 }
 
 stop_services() {

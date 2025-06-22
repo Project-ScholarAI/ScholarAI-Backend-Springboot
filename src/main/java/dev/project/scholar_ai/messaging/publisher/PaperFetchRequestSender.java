@@ -1,7 +1,7 @@
 package dev.project.scholar_ai.messaging.publisher;
 
 import dev.project.scholar_ai.config.RabbitMQConfig;
-import dev.project.scholar_ai.dto.agentRequests.PaperFetchRequest;
+import dev.project.scholar_ai.dto.agent.request.PaperFetchRequest;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
