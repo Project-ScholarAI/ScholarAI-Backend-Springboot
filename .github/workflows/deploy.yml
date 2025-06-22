@@ -144,7 +144,7 @@ jobs:
             --command-line "redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}" \
             --ports 6379 \
             --cpu 0.1 \
-            --memory 0.25 \
+            --memory 0.5 \
             --restart-policy Always
         fi
     
