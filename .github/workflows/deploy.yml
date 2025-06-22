@@ -146,6 +146,9 @@ jobs:
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-core-db-${TIMESTAMP} \
           --image postgres:17-alpine \
+          --registry-login-server index.docker.io \
+          --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+          --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
           --dns-name-label scholarai-core-db-${TIMESTAMP} \
           --os-type Linux \
           --ports 5432 \
@@ -162,6 +165,9 @@ jobs:
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-paper-db-${TIMESTAMP} \
           --image postgres:17-alpine \
+          --registry-login-server index.docker.io \
+          --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+          --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
           --dns-name-label scholarai-paper-db-${TIMESTAMP} \
           --os-type Linux \
           --ports 5432 \
@@ -178,6 +184,9 @@ jobs:
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-rabbitmq-${TIMESTAMP} \
           --image rabbitmq:3.12-alpine \
+          --registry-login-server index.docker.io \
+          --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+          --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
           --dns-name-label scholarai-rabbitmq-${TIMESTAMP} \
           --os-type Linux \
           --ports 5672 15672 \
@@ -193,6 +202,9 @@ jobs:
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-redis-${TIMESTAMP} \
           --image redis:7-alpine \
+          --registry-login-server index.docker.io \
+          --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+          --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
           --dns-name-label scholarai-redis-${TIMESTAMP} \
           --os-type Linux \
           --ports 6379 \
