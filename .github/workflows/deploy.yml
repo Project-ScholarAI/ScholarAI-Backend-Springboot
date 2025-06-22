@@ -69,7 +69,7 @@ jobs:
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
     
-    - name: Deploy as Container Group (Like Docker Compose)
+    - name: Deploy as Container Group (Simplified & Reliable)
       run: |
         # Delete existing container group if it exists
         if az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-stack > /dev/null 2>&1; then
@@ -78,160 +78,103 @@ jobs:
           sleep 30
         fi
         
-        # Create container group with all services (like docker-compose)
+        # Create a simple container group with just the Spring Boot app first
+        # This approach is more reliable than complex YAML
+        echo "Creating container group with Spring Boot app..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-stack \
-          --location eastus \
-          --os-type Linux \
-          --restart-policy Always \
+          --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
+          --registry-username ${{ secrets.ACR_USERNAME }} \
+          --registry-password ${{ secrets.ACR_PASSWORD }} \
           --dns-name-label scholarai-api \
-          --yaml-file - <<EOF
-        apiVersion: '2021-09-01'
-        location: eastus
-        name: scholarai-stack
-        properties:
-          containers:
-          # PostgreSQL Database
-          - name: postgres
-            properties:
-              image: postgres:17-alpine
-              ports:
-              - port: 5432
-              environmentVariables:
-              - name: POSTGRES_USER
-                value: ${{ secrets.CORE_DB_USER }}
-              - name: POSTGRES_PASSWORD
-                secureValue: ${{ secrets.CORE_DB_PASSWORD }}
-              - name: POSTGRES_DB
-                value: coreDB
-              resources:
-                requests:
-                  cpu: 0.25
-                  memoryInGb: 0.5
-          
-          # RabbitMQ
-          - name: rabbitmq
-            properties:
-              image: rabbitmq:3.12-alpine
-              ports:
-              - port: 5672
-              - port: 15672
-              environmentVariables:
-              - name: RABBITMQ_DEFAULT_USER
-                value: ${{ secrets.RABBITMQ_USER }}
-              - name: RABBITMQ_DEFAULT_PASS
-                secureValue: ${{ secrets.RABBITMQ_PASSWORD }}
-              resources:
-                requests:
-                  cpu: 0.25
-                  memoryInGb: 0.5
-          
-          # Redis
-          - name: redis
-            properties:
-              image: redis:7-alpine
-              ports:
-              - port: 6379
-              command:
-              - redis-server
-              - --requirepass
-              - ${{ secrets.REDIS_PASSWORD }}
-              resources:
-                requests:
-                  cpu: 0.1
-                  memoryInGb: 0.25
-          
-          # Spring Boot Application
-          - name: api
-            properties:
-              image: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-              ports:
-              - port: 8080
-              environmentVariables:
-              - name: SPRING_PROFILES_ACTIVE
-                value: prod
-              - name: ENV
-                value: prod
-              - name: CORE_DB_HOST
-                value: localhost  # Same container group = localhost
-              - name: CORE_DB_PORT
-                value: "5432"
-              - name: CORE_DB_NAME
-                value: coreDB
-              - name: CORE_DB_USER
-                value: ${{ secrets.CORE_DB_USER }}
-              - name: CORE_DB_PASSWORD
-                secureValue: ${{ secrets.CORE_DB_PASSWORD }}
-              - name: PAPER_DB_HOST
-                value: localhost
-              - name: PAPER_DB_PORT
-                value: "5432"
-              - name: PAPER_DB_NAME
-                value: paperDB
-              - name: PAPER_DB_USER
-                value: ${{ secrets.PAPER_DB_USER }}
-              - name: PAPER_DB_PASSWORD
-                secureValue: ${{ secrets.PAPER_DB_PASSWORD }}
-              - name: RABBITMQ_HOST
-                value: localhost
-              - name: RABBITMQ_PORT
-                value: "5672"
-              - name: RABBITMQ_USER
-                value: ${{ secrets.RABBITMQ_USER }}
-              - name: RABBITMQ_PASSWORD
-                secureValue: ${{ secrets.RABBITMQ_PASSWORD }}
-              - name: REDIS_HOST
-                value: localhost
-              - name: REDIS_PORT
-                value: "6379"
-              - name: REDIS_PASSWORD
-                secureValue: ${{ secrets.REDIS_PASSWORD }}
-              - name: JWT_SECRET
-                secureValue: ${{ secrets.JWT_SECRET }}
-              - name: JWT_ACCESS_EXPIRATION_MS
-                value: ${{ secrets.JWT_ACCESS_EXPIRATION_MS }}
-              - name: JWT_REFRESH_EXPIRATION_MS
-                value: ${{ secrets.JWT_REFRESH_EXPIRATION_MS }}
-              - name: SPRING_GOOGLE_CLIENT_ID
-                value: ${{ secrets.SPRING_GOOGLE_CLIENT_ID }}
-              - name: SPRING_GOOGLE_CLIENT_SECRET
-                secureValue: ${{ secrets.SPRING_GOOGLE_CLIENT_SECRET }}
-              - name: SPRING_GITHUB_CLIENT_ID
-                value: ${{ secrets.SPRING_GITHUB_CLIENT_ID }}
-              - name: SPRING_GITHUB_CLIENT_SECRET
-                secureValue: ${{ secrets.SPRING_GITHUB_CLIENT_SECRET }}
-              - name: SENDGRID_API_KEY
-                secureValue: ${{ secrets.SENDGRID_API_KEY }}
-              - name: SENDGRID_FROM_EMAIL
-                value: ${{ secrets.SENDGRID_FROM_EMAIL }}
-              - name: SENDGRID_TEMPLATE_ID
-                value: ${{ secrets.SENDGRID_TEMPLATE_ID }}
-              resources:
-                requests:
-                  cpu: 0.5
-                  memoryInGb: 1.0
-          
-          ipAddress:
-            type: Public
-            ports:
-            - protocol: tcp
-              port: 8080
-            - protocol: tcp
-              port: 15672  # RabbitMQ management UI
-            dnsNameLabel: scholarai-api
-          
-          imageRegistryCredentials:
-          - server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
-            username: ${{ secrets.ACR_USERNAME }}
-            password: ${{ secrets.ACR_PASSWORD }}
-          
-          osType: Linux
-          restartPolicy: Always
-        tags: {}
-        type: Microsoft.ContainerInstance/containerGroups
-        EOF
+          --os-type Linux \
+          --ports 8080 \
+          --cpu 1 \
+          --memory 2 \
+          --environment-variables \
+            SPRING_PROFILES_ACTIVE=prod \
+            ENV=prod \
+            CORE_DB_HOST=scholarai-postgres.eastus.azurecontainer.io \
+            CORE_DB_PORT=5432 \
+            CORE_DB_NAME=coreDB \
+            CORE_DB_USER=${{ secrets.CORE_DB_USER }} \
+            CORE_DB_PASSWORD=${{ secrets.CORE_DB_PASSWORD }} \
+            PAPER_DB_HOST=scholarai-postgres.eastus.azurecontainer.io \
+            PAPER_DB_PORT=5432 \
+            PAPER_DB_NAME=paperDB \
+            PAPER_DB_USER=${{ secrets.PAPER_DB_USER }} \
+            PAPER_DB_PASSWORD=${{ secrets.PAPER_DB_PASSWORD }} \
+            RABBITMQ_HOST=scholarai-rabbitmq.eastus.azurecontainer.io \
+            RABBITMQ_PORT=5672 \
+            RABBITMQ_USER=${{ secrets.RABBITMQ_USER }} \
+            RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
+            REDIS_HOST=scholarai-redis.eastus.azurecontainer.io \
+            REDIS_PORT=6379 \
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+            JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            JWT_ACCESS_EXPIRATION_MS=${{ secrets.JWT_ACCESS_EXPIRATION_MS }} \
+            JWT_REFRESH_EXPIRATION_MS=${{ secrets.JWT_REFRESH_EXPIRATION_MS }} \
+            SPRING_GOOGLE_CLIENT_ID=${{ secrets.SPRING_GOOGLE_CLIENT_ID }} \
+            SPRING_GOOGLE_CLIENT_SECRET=${{ secrets.SPRING_GOOGLE_CLIENT_SECRET }} \
+            SPRING_GITHUB_CLIENT_ID=${{ secrets.SPRING_GITHUB_CLIENT_ID }} \
+            SPRING_GITHUB_CLIENT_SECRET=${{ secrets.SPRING_GITHUB_CLIENT_SECRET }} \
+            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
+            SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }} \
+            SENDGRID_TEMPLATE_ID=${{ secrets.SENDGRID_TEMPLATE_ID }} \
+          --restart-policy Always
         
-        echo "✅ Container group deployed successfully!"
+        # Deploy the supporting services separately but with predictable FQDNs
+        echo "Creating PostgreSQL..."
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name scholarai-postgres \
+          --image postgres:17-alpine \
+          --dns-name-label scholarai-postgres \
+          --os-type Linux \
+          --ports 5432 \
+          --cpu 0.5 \
+          --memory 1 \
+          --environment-variables \
+            POSTGRES_USER=${{ secrets.CORE_DB_USER }} \
+            POSTGRES_PASSWORD=${{ secrets.CORE_DB_PASSWORD }} \
+            POSTGRES_DB=coreDB \
+          --restart-policy Always &
+        
+        echo "Creating RabbitMQ..."
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name scholarai-rabbitmq \
+          --image rabbitmq:3.12-alpine \
+          --dns-name-label scholarai-rabbitmq \
+          --os-type Linux \
+          --ports 5672 15672 \
+          --cpu 0.5 \
+          --memory 1 \
+          --environment-variables \
+            RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_USER }} \
+            RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_PASSWORD }} \
+          --restart-policy Always &
+        
+        echo "Creating Redis..."
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name scholarai-redis \
+          --image redis:7-alpine \
+          --dns-name-label scholarai-redis \
+          --os-type Linux \
+          --ports 6379 \
+          --cpu 0.25 \
+          --memory 0.5 \
+          --command-line "redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}" \
+          --restart-policy Always &
+        
+        # Wait for all background jobs to complete
+        wait
+        
+        echo "✅ All services deployed!"
         echo "🌐 API: https://scholarai-api.eastus.azurecontainer.io:8080"
-        echo "🐰 RabbitMQ UI: https://scholarai-api.eastus.azurecontainer.io:15672" 
+        echo "🗄️ PostgreSQL: scholarai-postgres.eastus.azurecontainer.io:5432"
+        echo "🐰 RabbitMQ: https://scholarai-rabbitmq.eastus.azurecontainer.io:15672"
+        echo "📦 Redis: scholarai-redis.eastus.azurecontainer.io:6379" 
