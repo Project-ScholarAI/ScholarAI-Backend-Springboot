@@ -126,12 +126,12 @@ jobs:
           --restart-policy Always
         
         # Deploy the supporting services separately but with predictable FQDNs
-        echo "Creating PostgreSQL..."
+        echo "Creating Core PostgreSQL Database..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-postgres \
+          --name scholarai-core-db \
           --image postgres:17-alpine \
-          --dns-name-label scholarai-postgres \
+          --dns-name-label scholarai-core-db \
           --os-type Linux \
           --ports 5432 \
           --cpu 0.5 \
@@ -140,6 +140,22 @@ jobs:
             POSTGRES_USER=${{ secrets.CORE_DB_USER }} \
             POSTGRES_PASSWORD=${{ secrets.CORE_DB_PASSWORD }} \
             POSTGRES_DB=coreDB \
+          --restart-policy Always &
+        
+        echo "Creating Paper PostgreSQL Database..."
+        az container create \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name scholarai-paper-db \
+          --image postgres:17-alpine \
+          --dns-name-label scholarai-paper-db \
+          --os-type Linux \
+          --ports 5432 \
+          --cpu 0.5 \
+          --memory 1 \
+          --environment-variables \
+            POSTGRES_USER=${{ secrets.PAPER_DB_USER }} \
+            POSTGRES_PASSWORD=${{ secrets.PAPER_DB_PASSWORD }} \
+            POSTGRES_DB=paperDB \
           --restart-policy Always &
         
         echo "Creating RabbitMQ..."
