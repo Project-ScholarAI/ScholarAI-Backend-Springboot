@@ -4,7 +4,6 @@ import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.security.JwtUtils;
-
 import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -123,22 +122,19 @@ public class AuthService {
         emailService.sendResetCodeByEmail(email, code);
     }
 
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            transactionManager = "transactionManager"
-    )
+    @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "transactionManager")
     // Reset Password: verify code and update password
     public void verifyCodeAndResetPassword(String email, String code, String newPassword) {
-        String redisKey = "RESET_CODE:"+ email;
+        String redisKey = "RESET_CODE:" + email;
         String storedCode = redisTemplate.opsForValue().get(redisKey);
 
-        if(storedCode == null || !storedCode.equals(code)){
+        if (storedCode == null || !storedCode.equals(code)) {
             throw new IllegalArgumentException("Invalid or expired reset code");
         }
 
-        AuthUser user = authUserRepository.findByEmail(email).orElseThrow(
-                () -> new IllegalArgumentException("User not found by this email!")
-        );
+        AuthUser user = authUserRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found by this email!"));
 
         System.out.println("Before update: " + user.getEncryptedPassword());
 
@@ -150,7 +146,7 @@ public class AuthService {
         System.out.println("User's password after update");
         System.out.println(user.getEncryptedPassword());
 
-        redisTemplate.delete(redisKey);//invalidate used code
+        redisTemplate.delete(redisKey); // invalidate used code
         redisTemplate.delete("REFRESH_TOKEN:" + email);
     }
 }

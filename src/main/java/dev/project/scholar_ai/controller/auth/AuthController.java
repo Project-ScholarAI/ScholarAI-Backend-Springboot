@@ -67,7 +67,7 @@ public class AuthController {
             // Note: Refresh token is stored securely in HttpOnly cookie
             // For development/testing, you can keep it in response by commenting the next
             // line
-             //authResponse.setRefreshToken(null);
+            // authResponse.setRefreshToken(null);
 
             logger.info("response cookie added , authResponse: ", authResponse);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Login successful", authResponse));
@@ -157,11 +157,10 @@ public class AuthController {
         }
     }
 
-
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         try {
-            logger.info("forgot password endpoint hitted with email: ",email);
+            logger.info("forgot password endpoint hitted with email: ", email);
 
             authService.sendResetCodeByMail(email);
             return ResponseEntity.ok(APIResponse.success(
@@ -172,14 +171,11 @@ public class AuthController {
         }
     }
 
-
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
-            @RequestParam String email,
-            @RequestParam String code,
-            @RequestParam String newPassword) {
+            @RequestParam String email, @RequestParam String code, @RequestParam String newPassword) {
         try {
-            logger.info("reset-password endpoint hitted with: ", email, " code: ", code," newpass: ", newPassword);
+            logger.info("reset-password endpoint hitted with: ", email, " code: ", code, " newpass: ", newPassword);
 
             authService.verifyCodeAndResetPassword(email, code, newPassword);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Password reset successfully.", null));

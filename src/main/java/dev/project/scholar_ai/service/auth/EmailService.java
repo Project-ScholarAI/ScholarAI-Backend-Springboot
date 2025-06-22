@@ -4,10 +4,10 @@ import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -39,9 +39,7 @@ public class EmailService {
 
         try {
             personalization.addDynamicTemplateData("RESET_CODE", code);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to add template data", e);
         }
 
@@ -50,19 +48,17 @@ public class EmailService {
         SendGrid sendGrid = new SendGrid(sendGridApiKey);
         Request request = new Request();
 
-        try{
+        try {
             request.setMethod(Method.POST);
             request.setEndpoint("/mail/send");
             request.setBody(mail.build());
             Response response = sendGrid.api(request);
 
-            if(response.getStatusCode() >= 400){
-                throw new RuntimeException("SendGrid error: "+ response.getBody());
+            if (response.getStatusCode() >= 400) {
+                throw new RuntimeException("SendGrid error: " + response.getBody());
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException("Failed to send email", e);
         }
     }
-
 }
