@@ -71,39 +71,46 @@ jobs:
     
     - name: Deploy as Container Group (Simplified & Reliable)
       run: |
-        # Clean up any existing containers first
-        echo "🧹 Cleaning up existing containers..."
-        for container in scholarai-stack scholarai-core-db scholarai-paper-db scholarai-rabbitmq scholarai-redis; do
-          if az container show --resource-group ${{ env.RESOURCE_GROUP }} --name $container > /dev/null 2>&1; then
-            echo "Deleting existing container: $container"
-            az container delete --resource-group ${{ env.RESOURCE_GROUP }} --name $container --yes
-          fi
+        # Clean up ALL existing containers first (including old timestamped ones)
+        echo "🧹 Cleaning up ALL existing containers..."
+        
+        # Delete all containers that match our patterns
+        for pattern in "scholarai-api" "scholarai-stack" "scholarai-core-db" "scholarai-paper-db" "scholarai-rabbitmq" "scholarai-redis" "scholarai-buet"; do
+          echo "Looking for containers with pattern: $pattern"
+          for container in $(az container list --resource-group ${{ env.RESOURCE_GROUP }} --query "[?contains(name, '$pattern')].name" --output tsv); do
+            if [ ! -z "$container" ]; then
+              echo "Deleting container: $container"
+              az container delete --resource-group ${{ env.RESOURCE_GROUP }} --name $container --yes
+            fi
+          done
         done
         
         # Wait for cleanup to complete
         echo "⏳ Waiting for cleanup to complete..."
-        sleep 45
+        sleep 60
         
-        # Use timestamp to ensure unique DNS names
-        TIMESTAMP=$(date +%s)
+        # Verify cleanup
+        echo "🔍 Verifying cleanup..."
+        remaining=$(az container list --resource-group ${{ env.RESOURCE_GROUP }} --query "[?contains(name, 'scholarai')].name" --output tsv | wc -l)
+        echo "Remaining ScholarAI containers: $remaining"
         
-        # Update the database hostnames in the API environment
-        CORE_DB_HOST="scholarai-core-db-${TIMESTAMP}.eastus.azurecontainer.io"
-        PAPER_DB_HOST="scholarai-paper-db-${TIMESTAMP}.eastus.azurecontainer.io"
-        RABBITMQ_HOST="scholarai-rabbitmq-${TIMESTAMP}.eastus.azurecontainer.io"
-        REDIS_HOST="scholarai-redis-${TIMESTAMP}.eastus.azurecontainer.io"
+        # Use consistent naming for stable URLs
+        CORE_DB_HOST="scholarai-buet-core-db.eastus.azurecontainer.io"
+        PAPER_DB_HOST="scholarai-buet-paper-db.eastus.azurecontainer.io"
+        RABBITMQ_HOST="scholarai-buet-rabbitmq.eastus.azurecontainer.io"
+        REDIS_HOST="scholarai-buet-redis.eastus.azurecontainer.io"
         
         # Create a simple container group with just the Spring Boot app first
         # This approach is more reliable than complex YAML
         echo "Creating container group with Spring Boot app..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-api-${TIMESTAMP} \
+          --name scholarai-buet-api \
           --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
           --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
           --registry-username ${{ secrets.ACR_USERNAME }} \
           --registry-password ${{ secrets.ACR_PASSWORD }} \
-          --dns-name-label scholarai-api-${TIMESTAMP} \
+          --dns-name-label scholarai-buet-api \
           --os-type Linux \
           --ports 8080 \
           --cpu 1 \
@@ -144,12 +151,12 @@ jobs:
         echo "Creating Core PostgreSQL Database..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-core-db-${TIMESTAMP} \
+          --name scholarai-buet-core-db \
           --image postgres:17-alpine \
           --registry-login-server index.docker.io \
           --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
           --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
-          --dns-name-label scholarai-core-db-${TIMESTAMP} \
+          --dns-name-label scholarai-buet-core-db \
           --os-type Linux \
           --ports 5432 \
           --cpu 0.5 \
@@ -163,12 +170,12 @@ jobs:
         echo "Creating Paper PostgreSQL Database..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-paper-db-${TIMESTAMP} \
+          --name scholarai-buet-paper-db \
           --image postgres:17-alpine \
           --registry-login-server index.docker.io \
           --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
           --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
-          --dns-name-label scholarai-paper-db-${TIMESTAMP} \
+          --dns-name-label scholarai-buet-paper-db \
           --os-type Linux \
           --ports 5432 \
           --cpu 0.5 \
@@ -182,12 +189,12 @@ jobs:
         echo "Creating RabbitMQ..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-rabbitmq-${TIMESTAMP} \
+          --name scholarai-buet-rabbitmq \
           --image rabbitmq:3.12-management \
           --registry-login-server index.docker.io \
           --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
           --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
-          --dns-name-label scholarai-rabbitmq-${TIMESTAMP} \
+          --dns-name-label scholarai-buet-rabbitmq \
           --os-type Linux \
           --ports 5672 15672 \
           --cpu 0.5 \
@@ -200,12 +207,12 @@ jobs:
         echo "Creating Redis..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-redis-${TIMESTAMP} \
+          --name scholarai-buet-redis \
           --image redis:7-alpine \
           --registry-login-server index.docker.io \
           --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
           --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
-          --dns-name-label scholarai-redis-${TIMESTAMP} \
+          --dns-name-label scholarai-buet-redis \
           --os-type Linux \
           --ports 6379 \
           --cpu 0.25 \
@@ -217,8 +224,8 @@ jobs:
         wait
         
         echo "✅ All services deployed!"
-        echo "🌐 API: https://scholarai-api-${TIMESTAMP}.eastus.azurecontainer.io:8080"
-        echo "🗄️ Core DB: scholarai-core-db-${TIMESTAMP}.eastus.azurecontainer.io:5432"
-        echo "🗄️ Paper DB: scholarai-paper-db-${TIMESTAMP}.eastus.azurecontainer.io:5432"
-        echo "🐰 RabbitMQ UI: https://scholarai-rabbitmq-${TIMESTAMP}.eastus.azurecontainer.io:15672"
-        echo "📦 Redis: scholarai-redis-${TIMESTAMP}.eastus.azurecontainer.io:6379" 
+        echo "🌐 API: https://scholarai-buet-api.eastus.azurecontainer.io:8080"
+        echo "🗄️ Core DB: scholarai-buet-core-db.eastus.azurecontainer.io:5432"
+        echo "🗄️ Paper DB: scholarai-buet-paper-db.eastus.azurecontainer.io:5432"
+        echo "🐰 RabbitMQ UI: https://scholarai-buet-rabbitmq.eastus.azurecontainer.io:15672"
+        echo "📦 Redis: scholarai-buet-redis.eastus.azurecontainer.io:6379" 
