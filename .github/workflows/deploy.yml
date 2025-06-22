@@ -149,14 +149,34 @@ jobs:
             --restart-policy Always
         fi
         
-        # Wait for all services to be fully running
-        echo "Waiting for services to start..."
-        sleep 60
-        
-        # Get actual IP addresses of services
-        POSTGRES_IP=$(az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-postgres --query ipAddress.ip --output tsv)
-        RABBITMQ_IP=$(az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-rabbitmq --query ipAddress.ip --output tsv)
-        REDIS_IP=$(az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-redis --query ipAddress.ip --output tsv)
+        # Wait for all services to expose public IPs (can take 2-3 mins)
+        echo "Waiting for public IPs (this can take a couple of minutes) ..."
+
+        get_ip() {
+          local name=$1
+          local ip=""
+          local attempts=20  # ~200s max
+          while [ $attempts -gt 0 ]; do
+            ip=$(az container show --resource-group ${{ env.RESOURCE_GROUP }} --name "$name" --query ipAddress.ip --output tsv)
+            if [ -n "$ip" ] && [[ "$ip" != "null" ]]; then
+              echo "$ip"
+              return 0
+            fi
+            echo "⏳  $name not ready yet – waiting 10s ..."
+            sleep 10
+            attempts=$((attempts-1))
+          done
+          echo ""  # return empty string on failure
+        }
+
+        POSTGRES_IP=$(get_ip scholarai-postgres)
+        RABBITMQ_IP=$(get_ip scholarai-rabbitmq)
+        REDIS_IP=$(get_ip scholarai-redis)
+
+        if [ -z "$POSTGRES_IP" ] || [ -z "$RABBITMQ_IP" ] || [ -z "$REDIS_IP" ]; then
+          echo "❌ Failed to retrieve all service IPs – aborting deployment." >&2
+          exit 1
+        fi
         
         echo "Service IPs:"
         echo "PostgreSQL: $POSTGRES_IP"
