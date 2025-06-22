@@ -224,8 +224,8 @@ jobs:
         wait
         
         echo "✅ All services deployed!"
-        echo "🌐 API: https://scholarai-buet-api.eastus.azurecontainer.io:8080"
+        echo "🌐 API: http://scholarai-buet-api.eastus.azurecontainer.io:8080"
         echo "🗄️ Core DB: scholarai-buet-core-db.eastus.azurecontainer.io:5432"
         echo "🗄️ Paper DB: scholarai-buet-paper-db.eastus.azurecontainer.io:5432"
-        echo "🐰 RabbitMQ UI: https://scholarai-buet-rabbitmq.eastus.azurecontainer.io:15672"
+        echo "🐰 RabbitMQ UI: http://scholarai-buet-rabbitmq.eastus.azurecontainer.io:15672"
         echo "📦 Redis: scholarai-buet-redis.eastus.azurecontainer.io:6379" 
