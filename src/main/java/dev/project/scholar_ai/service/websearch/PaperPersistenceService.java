@@ -21,12 +21,30 @@ public class PaperPersistenceService {
     private final PaperRepository paperRepository;
     private final PaperMapper paperMapper;
     private final WebSearchOperationRepository webSearchOperationRepository;
+    private final PaperDeduplicationService paperDeduplicationService;
 
     @Transactional(transactionManager = "paperTransactionManager")
     public List<Paper> savePapers(List<PaperMetadataDto> paperDtos, String correlationId) {
         log.info("Persisting {} papers for correlation ID {}", paperDtos.size(), correlationId);
 
-        return paperDtos.stream()
+        // Filter out duplicate papers before processing
+        List<PaperMetadataDto> newPapers = paperDeduplicationService.filterNewPapers(paperDtos);
+
+        int duplicateCount = paperDtos.size() - newPapers.size();
+        if (duplicateCount > 0) {
+            log.info(
+                    "Filtered out {} duplicate papers. Processing {} new papers for correlation ID {}",
+                    duplicateCount,
+                    newPapers.size(),
+                    correlationId);
+        }
+
+        if (newPapers.isEmpty()) {
+            log.info("No new papers to save for correlation ID {}", correlationId);
+            return Collections.emptyList();
+        }
+
+        return newPapers.stream()
                 .map(dto -> {
                     try {
                         Paper paper = paperMapper.toEntity(dto);
@@ -50,7 +68,10 @@ public class PaperPersistenceService {
                         }
 
                         Paper savedPaper = paperRepository.save(paper);
-                        log.debug("Successfully saved paper: {} (DOI: {})", savedPaper.getTitle(), savedPaper.getDoi());
+                        log.debug(
+                                "Successfully saved new paper: {} (DOI: {})",
+                                savedPaper.getTitle(),
+                                savedPaper.getDoi());
                         return savedPaper;
 
                     } catch (Exception e) {
