@@ -176,6 +176,33 @@ jobs:
           --environment-variables \
             SPRING_PROFILES_ACTIVE=prod \
             ENV=prod \
+            CORE_DB_HOST=scholarai-postgres \
+            CORE_DB_PORT=5432 \
+            CORE_DB_NAME=coreDB \
+            CORE_DB_USER=${{ secrets.CORE_DB_USER }} \
+            CORE_DB_PASSWORD=${{ secrets.CORE_DB_PASSWORD }} \
+            PAPER_DB_HOST=scholarai-postgres \
+            PAPER_DB_PORT=5432 \
+            PAPER_DB_NAME=paperDB \
+            PAPER_DB_USER=${{ secrets.PAPER_DB_USER }} \
+            PAPER_DB_PASSWORD=${{ secrets.PAPER_DB_PASSWORD }} \
+            RABBITMQ_HOST=scholarai-rabbitmq \
+            RABBITMQ_PORT=5672 \
+            RABBITMQ_USER=${{ secrets.RABBITMQ_USER }} \
+            RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
+            REDIS_HOST=scholarai-redis \
+            REDIS_PORT=6379 \
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+            JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            JWT_ACCESS_EXPIRATION_MS=${{ secrets.JWT_ACCESS_EXPIRATION_MS }} \
+            JWT_REFRESH_EXPIRATION_MS=${{ secrets.JWT_REFRESH_EXPIRATION_MS }} \
+            SPRING_GOOGLE_CLIENT_ID=${{ secrets.SPRING_GOOGLE_CLIENT_ID }} \
+            SPRING_GOOGLE_CLIENT_SECRET=${{ secrets.SPRING_GOOGLE_CLIENT_SECRET }} \
+            SPRING_GITHUB_CLIENT_ID=${{ secrets.SPRING_GITHUB_CLIENT_ID }} \
+            SPRING_GITHUB_CLIENT_SECRET=${{ secrets.SPRING_GITHUB_CLIENT_SECRET }} \
+            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
+            SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL }} \
+            SENDGRID_TEMPLATE_ID=${{ secrets.SENDGRID_TEMPLATE_ID }} \
           --restart-policy Always
         
         echo "Spring Boot backend deployed successfully!"
