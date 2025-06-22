@@ -76,7 +76,7 @@ jobs:
           az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-postgres \
-            --image postgres:17-alpine \
+            --image mcr.microsoft.com/oss/postgres/postgres:17-alpine \
             --os-type Linux \
             --environment-variables \
               POSTGRES_USER=${{ secrets.CORE_DB_USER }} \
@@ -94,7 +94,7 @@ jobs:
           az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-rabbitmq \
-            --image rabbitmq:3.12-alpine \
+            --image mcr.microsoft.com/oss/rabbitmq/rabbitmq:3.12-alpine \
             --os-type Linux \
             --environment-variables \
               RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_USER }} \
@@ -111,7 +111,7 @@ jobs:
           az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-redis \
-            --image redis:7-alpine \
+            --image mcr.microsoft.com/oss/redis/redis:7-alpine \
             --os-type Linux \
             --command-line "redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}" \
             --ports 6379 \
