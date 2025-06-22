@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @Transactional(transactionManager = "transactionManager")
@@ -23,6 +24,10 @@ public class UserLoadingService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+
         AuthUser user = authUserRepository
                 .findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + username));
