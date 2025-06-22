@@ -98,7 +98,7 @@ jobs:
         echo "Creating container group with Spring Boot app..."
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
-          --name scholarai-stack-${TIMESTAMP} \
+          --name scholarai-api-${TIMESTAMP} \
           --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
           --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
           --registry-username ${{ secrets.ACR_USERNAME }} \
@@ -183,7 +183,7 @@ jobs:
         az container create \
           --resource-group ${{ env.RESOURCE_GROUP }} \
           --name scholarai-rabbitmq-${TIMESTAMP} \
-          --image rabbitmq:3.12-alpine \
+          --image rabbitmq:3.12-management \
           --registry-login-server index.docker.io \
           --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
           --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
