@@ -70,13 +70,35 @@ jobs:
     
     - name: Deploy Core Services (if not exists)
       run: |
+        # Function to retry commands
+        retry_command() {
+          local max_attempts=3
+          local delay=30
+          local attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            if "$@"; then
+              return 0
+            else
+              echo "Attempt $attempt failed. Retrying in $delay seconds..."
+              sleep $delay
+              ((attempt++))
+            fi
+          done
+          
+          echo "All $max_attempts attempts failed."
+          return 1
+        }
         # Deploy Single PostgreSQL with Multiple Databases (COST OPTIMIZED)
         if ! az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-postgres > /dev/null 2>&1; then
           echo "Creating Shared PostgreSQL Database..."
-          az container create \
+          retry_command az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-postgres \
-            --image mcr.microsoft.com/oss/postgres/postgres:17-alpine \
+            --image postgres:17-alpine \
+            --registry-login-server index.docker.io \
+            --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+            --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
             --os-type Linux \
             --environment-variables \
               POSTGRES_USER=${{ secrets.CORE_DB_USER }} \
@@ -91,10 +113,13 @@ jobs:
         # Deploy Lightweight RabbitMQ
         if ! az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-rabbitmq > /dev/null 2>&1; then
           echo "Creating RabbitMQ..."
-          az container create \
+          retry_command az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-rabbitmq \
-            --image mcr.microsoft.com/oss/rabbitmq/rabbitmq:3.12-alpine \
+            --image rabbitmq:3.12-alpine \
+            --registry-login-server index.docker.io \
+            --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+            --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
             --os-type Linux \
             --environment-variables \
               RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_USER }} \
@@ -108,10 +133,13 @@ jobs:
         # Deploy Lightweight Redis
         if ! az container show --resource-group ${{ env.RESOURCE_GROUP }} --name scholarai-redis > /dev/null 2>&1; then
           echo "Creating Redis..."
-          az container create \
+          retry_command az container create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name scholarai-redis \
-            --image mcr.microsoft.com/oss/redis/redis:7-alpine \
+            --image redis:7-alpine \
+            --registry-login-server index.docker.io \
+            --registry-username ${{ secrets.DOCKER_HUB_USERNAME }} \
+            --registry-password ${{ secrets.DOCKER_HUB_PASSWORD }} \
             --os-type Linux \
             --command-line "redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}" \
             --ports 6379 \
