@@ -43,7 +43,7 @@ jobs:
 
     - name: Health Check
       run: |
-        sleep 30
+        sleep 60
         echo "🏥 Running health check for Spring Boot API..."
         if curl -f http://scholarai-vm.eastus.cloudapp.azure.com:8080/actuator/health; then
           echo "✅ Spring Boot API is healthy"
