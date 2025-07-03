@@ -5,6 +5,7 @@ import dev.project.scholar_ai.model.core.account.UserAccount;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
 import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
+import dev.project.scholar_ai.repository.core.auth.SocialUserRepository;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
     private final AuthUserRepository authUserRepository;
+    private final SocialUserRepository socialUserRepository;
     private final UserAccountRepository userAccountRepository;
     private final UserLoadingService userLoadingService;
     private final PasswordEncoder passwordEncoder;
@@ -50,9 +52,13 @@ public class AuthService {
 
     // register new user
     public void registerUser(String email, String password) {
+        //if exists in social_users table, not allowed
         if (authUserRepository.findByEmail(email).isPresent()) {
             throw new BadCredentialsException("User with email " + email + " already exists.");
+        } else if (socialUserRepository.findByEmail(email).isPresent()) {
+            throw new BadCredentialsException("This " + email +" is already registered via Google/Github login. Please use social auth to continue.");
         }
+
         AuthUser newUser = new AuthUser();
         newUser.setEmail(email);
         newUser.setEncryptedPassword(passwordEncoder.encode(password));
@@ -79,6 +85,11 @@ public class AuthService {
         String accessToken = jwtUtils.generateAccessToken(userDetails.getUsername());
         String refreshToken = jwtUtils.generateRefreshToken(userDetails.getUsername());
         refreshTokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
+
+        //if user exists in social_users , then not allow email, pass login
+        if (socialUserRepository.findByEmail(email).isPresent()) {
+            throw new BadCredentialsException("This " + email +" is already registered via Google/Github login. Please use social auth to continue.");
+        }
 
         AuthUser user = authUserRepository
                 .findByEmail(email)

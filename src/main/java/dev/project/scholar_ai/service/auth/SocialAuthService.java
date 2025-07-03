@@ -4,12 +4,17 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.GitHubEmailDTO;
 import dev.project.scholar_ai.dto.auth.GitHubUserDTO;
+import dev.project.scholar_ai.model.core.account.UserAccount;
 import dev.project.scholar_ai.model.core.auth.SocialUser;
 import dev.project.scholar_ai.model.core.auth.UserProvider;
+import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
+import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.core.auth.SocialUserRepository;
 import dev.project.scholar_ai.repository.core.auth.UserProviderRepository;
 import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +35,8 @@ public class SocialAuthService {
     private final UserProviderRepository userProviderRepository;
     private final GoogleVerifierUtil googleVerifierUtil;
     private final RestTemplate restTemplate;
-
+    private final AuthUserRepository authUserRepository;
+    private final UserAccountRepository userAccountRepository;
     @Value("${spring.github.client-id}")
     private String githubClientId;
 
@@ -52,6 +58,14 @@ public class SocialAuthService {
         String providerId = payload.getSubject();
         String name = (String) payload.get("name");
 
+        if(authUserRepository.findByEmail(email).isPresent())
+            throw new BadCredentialsException("This email is registered with a password. Please log in using email and password.");
+        else if (socialUserRepository.findByEmail(email).isPresent()) {
+            SocialUser socialUser = socialUserRepository.findByEmail(email).get();
+            if(socialUser.getProvider().equals("GITHUB"))
+                throw new BadCredentialsException("This "+ email+ " is registered with GitHub. Please log in using GitHub.");
+        }
+
         if (email == null || email.isEmpty()) {
             throw new IllegalArgumentException("Email not found in Google ID token payload.");
         }
@@ -61,6 +75,7 @@ public class SocialAuthService {
             newUser.setEmail(email);
             newUser.setName(name);
             newUser.setRole("USER");
+            newUser.setProvider("GOOGLE");
             return socialUserRepository.save(newUser);
         });
 
@@ -69,13 +84,18 @@ public class SocialAuthService {
             socialUserRepository.save(user);
         }
 
-        userProviderRepository.findBySocialUserAndProvider(user, "GOOGLE").orElseGet(() -> {
-            UserProvider provider = new UserProvider();
-            provider.setSocialUser(user);
-            provider.setProvider("GOOGLE");
-            provider.setProviderId(providerId);
-            return userProviderRepository.save(provider);
-        });
+        // Create or update linked user account
+        UserAccount account = userAccountRepository.findByEmail(user.getEmail()).orElse(null);
+
+        if (account == null) {
+            account = new UserAccount();
+            account.setId(user.getId());
+            account.setEmail(user.getEmail());
+            account.setCreatedAt(Instant.now());
+        }
+
+        account.setUpdatedAt(Instant.now());
+        userAccountRepository.save(account);
 
         // Generate tokens
         String accessToken = jwtUtils.generateAccessToken(user.getEmail());
@@ -98,6 +118,14 @@ public class SocialAuthService {
         String providerId = gitHubUser.getId().toString();
         String name = gitHubUser.getName() != null ? gitHubUser.getName() : gitHubUser.getLogin();
 
+        if(authUserRepository.findByEmail(email).isPresent())
+            throw new BadCredentialsException("This email is registered with a password. Please log in using email and password.");
+        else if (socialUserRepository.findByEmail(email).isPresent()) {
+            SocialUser socialUser = socialUserRepository.findByEmail(email).get();
+            if(socialUser.getProvider().equals("GOOGLE"))
+                throw new BadCredentialsException("This "+ email+ " is registered with GitHub. Please log in using GitHub.");
+        }
+
         if (email == null || email.isEmpty()) {
             throw new IllegalArgumentException("Email not found in Github user profile");
         }
@@ -107,6 +135,7 @@ public class SocialAuthService {
             newUser.setEmail(email);
             newUser.setName(name);
             newUser.setRole("USER");
+            newUser.setProvider("GITHUB");
             return socialUserRepository.save(newUser);
         });
 
@@ -115,13 +144,18 @@ public class SocialAuthService {
             socialUserRepository.save(socialUser);
         }
 
-        userProviderRepository.findBySocialUserAndProvider(socialUser, "GITHUB").orElseGet(() -> {
-            UserProvider provider = new UserProvider();
-            provider.setSocialUser(socialUser);
-            provider.setProvider("GITHUB");
-            provider.setProviderId(providerId);
-            return userProviderRepository.save(provider);
-        });
+        // Create or update linked user account
+        UserAccount account = userAccountRepository.findByEmail(socialUser.getEmail()).orElse(null);
+
+        if (account == null) {
+            account = new UserAccount();
+            account.setId(socialUser.getId());
+            account.setEmail(socialUser.getEmail());
+            account.setCreatedAt(Instant.now());
+        }
+
+        account.setUpdatedAt(Instant.now());
+        userAccountRepository.save(account);
 
         // Generate tokens
         String jwtAccessToken = jwtUtils.generateAccessToken(socialUser.getEmail());
