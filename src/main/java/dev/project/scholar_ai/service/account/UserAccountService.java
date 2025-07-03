@@ -56,7 +56,26 @@ public class UserAccountService {
         return userAccountRepository.save(userAccount);
     }
 
+    /**
+     * Update the profile image.
+     */
+    public void updateProfileImage(UUID userId, String imageUrl, String fileName){
+        UserAccount userAccount = getAccount(userId);
+        userAccount.setProfileImageUrl(imageUrl);
+        userAccount.setProfileImageFilename(fileName);
+        userAccount.setUpdatedAt(Instant.now());
+        userAccountRepository.save(userAccount);
+    }
+
+    /**
+     * Delete the profile image (sets fields to null).
+     */
+    public void deleteProfileImage(UUID userId){
+        UserAccount userAccount = getAccount(userId);
+        userAccount.setProfileImageUrl(null);
+        userAccount.setProfileImageFilename(null);
+        userAccount.setUpdatedAt(Instant.now());
+        userAccountRepository.save(userAccount);
+    }
     
-
-
 }
