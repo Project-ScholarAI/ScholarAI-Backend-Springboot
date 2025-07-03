@@ -1,10 +1,13 @@
 package dev.project.scholar_ai.service.auth;
 
 import dev.project.scholar_ai.dto.auth.AuthResponse;
+import dev.project.scholar_ai.model.core.account.UserAccount;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
+import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
     private final AuthUserRepository authUserRepository;
+    private final UserAccountRepository userAccountRepository;
     private final UserLoadingService userLoadingService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
@@ -53,7 +57,16 @@ public class AuthService {
         newUser.setEmail(email);
         newUser.setEncryptedPassword(passwordEncoder.encode(password));
         newUser.setRole("USER"); // Default role
-        authUserRepository.save(newUser);
+        AuthUser savedUser = authUserRepository.save(newUser);
+
+        // Create linked user account
+        UserAccount account = new UserAccount();
+        account.setId(savedUser.getId());           // must match @Id of AuthUser
+        account.setEmail(savedUser.getEmail());
+        account.setCreatedAt(Instant.now());
+        account.setUpdatedAt(Instant.now());
+
+        userAccountRepository.save(account);
     }
 
     // login registered user
