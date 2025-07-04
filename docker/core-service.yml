@@ -30,7 +30,7 @@ services:
     volumes:
       - paper-db-data:/var/lib/postgresql/data
     ports:
-      - "5435:5432"
+      - "55436:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${PAPER_DB_USER}"]
       interval: 10s

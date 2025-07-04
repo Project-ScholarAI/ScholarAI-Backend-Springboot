@@ -1,76 +1,66 @@
 package dev.project.scholar_ai.config;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.protocol.ProtocolVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Configuration class for Redis.
- *
- * <p>
- * This class sets up the connection to a Redis instance and provides a
- * RedisTemplate
- * for interacting with Redis. It reads Redis connection details (host, port,
- * password)
- * from application properties.
+ * Redis configuration with mandatory password authentication.
  */
 @Configuration
 public class RedisConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Value("${spring.data.redis.host:}")
-    private String redisHost;
+    @Value("${spring.data.redis.host}")
+    private String redisHost;         // no default → will fail if missing
 
     @Value("${spring.data.redis.port:6379}")
     private int redisPort;
 
-    @Value("${spring.data.redis.password:}")
-    private String redisPassword;
+    @Value("${spring.data.redis.password}")
+    private String redisPassword;     // no default → will fail if missing
 
-    /**
-     * Creates a LettuceConnectionFactory for connecting to Redis.
-     *
-     * <p>
-     * This method configures the connection using the host, port, and password
-     * specified in the application properties. It logs the Redis environment
-     * variables
-     * being used.
-     *
-     * @return A configured LettuceConnectionFactory instance.
-     */
+    // -------------------------------------------------------------------------
+    // Connection factory
+    // -------------------------------------------------------------------------
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
-        logRedisEnv();
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(redisHost);
-        config.setPort(redisPort);
-        if (!redisPassword.isBlank()) {
-            config.setPassword(redisPassword);
-        }
-        return new LettuceConnectionFactory(config);
+
+        validateProps();              // abort if a required prop is empty
+
+        RedisStandaloneConfiguration cfg =
+                new RedisStandaloneConfiguration(redisHost, redisPort);
+        cfg.setUsername("default");                       // ACL user (Redis ≥ 6)
+        cfg.setPassword(RedisPassword.of(redisPassword)); // always send password
+
+        LettuceClientConfiguration clientCfg = LettuceClientConfiguration.builder()
+                // Force RESP2 so that CLIENT SETINFO isn’t used (for Redis < 7)
+                .clientOptions(ClientOptions.builder()
+                        .protocolVersion(ProtocolVersion.RESP2)
+                        .build())
+                .build();
+
+        return new LettuceConnectionFactory(cfg, clientCfg);
     }
 
-    /**
-     * Creates a RedisTemplate for interacting with Redis.
-     *
-     * <p>
-     * This method configures the RedisTemplate with the provided
-     * LettuceConnectionFactory
-     * and sets StringRedisSerializer for both keys and values.
-     *
-     * @param connectionFactory The LettuceConnectionFactory to use for the
-     *                          RedisTemplate.
-     * @return A configured RedisTemplate instance.
-     */
+    // -------------------------------------------------------------------------
+    // RedisTemplate
+    // -------------------------------------------------------------------------
     @Bean
-    public RedisTemplate<String, String> redisTemplate(LettuceConnectionFactory connectionFactory) {
+    public RedisTemplate<String, String> redisTemplate(
+            LettuceConnectionFactory connectionFactory) {
+
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -78,26 +68,21 @@ public class RedisConfig {
         return template;
     }
 
-    /**
-     * Logs the Redis environment variables.
-     *
-     * <p>
-     * This method logs the Redis host, port, and whether a password is set.
-     * It issues warnings if the host or password is not set.
-     */
-    private void logRedisEnv() {
-        if (redisHost.isBlank()) {
-            logger.warn("⚠️  Redis host is not set (spring.data.redis.host).");
-        } else {
-            logger.info("✅ Redis Host: {}", redisHost);
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+    private void validateProps() {
+        if (redisHost == null || redisHost.isBlank()) {
+            throw new IllegalStateException(
+                    "`spring.data.redis.host` must be configured");
+        }
+        if (redisPassword == null || redisPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "`spring.data.redis.password` must be configured — Redis must be protected by a password");
         }
 
-        logger.info("✅ Redis Port: {}", redisPort);
-
-        if (redisPassword.isBlank()) {
-            logger.warn("⚠️  Redis password is not set (spring.data.redis.password).");
-        } else {
-            logger.info("🔒 Redis password is set.");
-        }
+        log.info("✅ Redis Host: {}", redisHost);
+        log.info("✅ Redis Port: {}", redisPort);
+        log.info("🔒 Redis password is configured (not logged for security).");
     }
 }

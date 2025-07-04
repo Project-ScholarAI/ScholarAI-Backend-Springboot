@@ -4,6 +4,7 @@ import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,14 +22,21 @@ public class EmailService {
     @Value("${spring.sendgrid.template-id}")
     private String templateId;
 
+    private SendGrid sendGrid;
+
+    @PostConstruct
+    public void init() {
+        this.sendGrid = new SendGrid(sendGridApiKey);
+    }
+
     public void sendResetCodeByEmail(String to, String code) {
+        if (to == null || code == null) {
+            throw new IllegalArgumentException("Email and code cannot be null");
+        }
+
         System.out.printf("Sending reset code to %s: %s%n", to, code);
-        // You can integrate SendGrid, Mailgun, SMTP, or SMS here
         Email from = new Email(fromEmail);
         Email toEmail = new Email(to);
-
-        // Dynamic template data (maps to {{RESET_CODE}} in your SendGrid template)
-        String dynamicData = "{\"RESET_CODE\": \"" + code + "\"}";
 
         Mail mail = new Mail();
         mail.setFrom(from);
@@ -44,8 +52,6 @@ public class EmailService {
         }
 
         mail.addPersonalization(personalization);
-
-        SendGrid sendGrid = new SendGrid(sendGridApiKey);
         Request request = new Request();
 
         try {
