@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "ScholarAI - User Account API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "abcd-efgh-1234-5678"
+  },
+  "item": [
+    {
+      "name": "Get Current User Account",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/account",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "account"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update User Account",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"John Doe\",\n  \"bio\": \"Postdoc researcher at ScholarAI\",\n  \"institution\": \"MIT\",\n  \"googleScholarUrl\": \"https://scholar.google.com/citations?user=xxxx\",\n  \"linkedinUrl\": \"https://linkedin.com/in/johndoe\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/account",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "account"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Upload Profile Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "profileImage",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/account/profile-image",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "account",
+            "profile-image"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Profile Image",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/account/profile-image",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "account",
+            "profile-image"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "access_token",
+      "value": "YOUR_JWT_TOKEN_HERE"
+    }
+  ]
+}
