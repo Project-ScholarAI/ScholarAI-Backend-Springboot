@@ -57,14 +57,17 @@ public class SecurityConfig {
                                 "/docs",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**")
+                                "/v3/api-docs/**",
+                                // Extraction and QA endpoints for testing
+                                "/api/papers/**",
+                                "/api/test/extraction/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**", "/api/test/extraction/**"))
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -1,7 +1,9 @@
 package dev.project.scholar_ai.model.paper.metadata;
 
+import dev.project.scholar_ai.enums.ExtractionStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +70,18 @@ public class Paper {
     // Fields of Study (stored as comma-separated values for simplicity)
     @Column(name = "fields_of_study", columnDefinition = "TEXT")
     private String fieldsOfStudy;
+
+    // Text Extraction Fields
+    @Column(name = "extracted_text", columnDefinition = "TEXT")
+    private String extractedText;
+
+    @Column(name = "extraction_status")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ExtractionStatus extractionStatus = ExtractionStatus.PENDING;
+
+    @Column(name = "extracted_at")
+    private LocalDateTime extractedAt;
 
     // Relationships
     @OneToMany(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
