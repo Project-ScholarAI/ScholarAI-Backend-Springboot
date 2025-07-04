@@ -22,6 +22,7 @@ public class SocialUser {
     private String name;
 
     private String role;
+    private String provider;
 
     @OneToMany(mappedBy = "socialUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserProvider> providers;

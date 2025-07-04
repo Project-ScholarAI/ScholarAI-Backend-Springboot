@@ -17,12 +17,23 @@ public class GoogleVerifierUtil {
 
     private GoogleIdTokenVerifier verifier;
 
+    // Added for testability
+    public GoogleVerifierUtil(GoogleIdTokenVerifier verifier) {
+        this.verifier = verifier;
+    }
+
+    public GoogleVerifierUtil() {
+        // Default constructor for Spring
+    }
+
     @PostConstruct
     public void init() throws Exception {
-        this.verifier = new GoogleIdTokenVerifier.Builder(
-                        GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(clientId))
-                .build();
+        if (this.verifier == null) {
+            this.verifier = new GoogleIdTokenVerifier.Builder(
+                            GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(clientId))
+                    .build();
+        }
     }
 
     public GoogleIdToken.Payload verify(String idTokenString) {
