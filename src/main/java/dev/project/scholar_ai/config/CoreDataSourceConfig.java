@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @AutoConfigureAfter(HibernateJpaAutoConfiguration.class)
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        basePackages = "dev.project.scholar_ai.repository.core",
+        basePackages = {"dev.project.scholar_ai.repository.core", "dev.project.scholar_ai.repository.qa"},
         entityManagerFactoryRef = "entityManagerFactory",
         transactionManagerRef = "transactionManager")
 public class CoreDataSourceConfig {
@@ -43,7 +43,7 @@ public class CoreDataSourceConfig {
 
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setDataSource(dataSource);
-        factory.setPackagesToScan("dev.project.scholar_ai.model.core");
+        factory.setPackagesToScan("dev.project.scholar_ai.model.core", "dev.project.scholar_ai.model.qa");
         factory.setPersistenceUnitName("core");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();

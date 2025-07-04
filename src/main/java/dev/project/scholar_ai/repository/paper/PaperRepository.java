@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,4 +46,14 @@ public interface PaperRepository extends JpaRepository<Paper, UUID> {
 
     @Query("SELECT p FROM Paper p JOIN p.externalIds e WHERE e.source IN :sources AND e.value IN :values")
     List<Paper> findByExternalIds(@Param("sources") List<String> sources, @Param("values") List<String> values);
+
+    // Text extraction related queries
+    List<Paper> findByPdfUrlIsNotNullAndExtractedTextIsNull();
+    
+    List<Paper> findByExtractionStatus(dev.project.scholar_ai.enums.ExtractionStatus status);
+    
+    Page<Paper> findByExtractionStatus(dev.project.scholar_ai.enums.ExtractionStatus status, Pageable pageable);
+    
+    // Search methods with pagination
+    Page<Paper> findByTitleContainingIgnoreCaseOrAbstractTextContainingIgnoreCase(String titleQuery, String abstractQuery, Pageable pageable);
 }
