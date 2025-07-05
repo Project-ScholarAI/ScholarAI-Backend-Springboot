@@ -10,15 +10,13 @@ import dev.project.scholar_ai.model.core.todo.TodoSubtask;
 import dev.project.scholar_ai.repository.core.todo.TodoRepository;
 import dev.project.scholar_ai.repository.core.todo.TodoSubtaskRepository;
 import dev.project.scholar_ai.security.SecurityUtils;
-import dev.project.scholar_ai.service.todo.TodoService;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -31,27 +29,53 @@ public class TodoServiceImpl implements TodoService {
 
     @Override
     public TodoResponseDTO createTodo(TodoCreateReqDTO request) throws Exception {
-        Todo todo = todoMapper.todoCreateRequestToTodo(request);
-        if (request.getSubtasks() != null) {
-            request.getSubtasks().forEach(subtaskReq -> {
-                TodoSubtask subtask = TodoSubtask.builder()
-                        .title(subtaskReq.getTitle())
-                        .completed(false)
-                        .build();
-                todo.addSubtask(subtask);
-            });
+        try {
+            // Validate user authentication first
+            String userId = SecurityUtils.getCurrentUserId();
+            if (userId == null || userId.trim().isEmpty()) {
+                throw new IllegalStateException("User authentication required");
+            }
+
+            // Validate required fields
+            if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+                throw new IllegalArgumentException("Title is required");
+            }
+            if (request.getPriority() == null) {
+                throw new IllegalArgumentException("Priority is required");
+            }
+            if (request.getCategory() == null) {
+                throw new IllegalArgumentException("Category is required");
+            }
+
+            Todo todo = todoMapper.todoCreateRequestToTodo(request);
+
+            if (request.getSubtasks() != null) {
+                request.getSubtasks().forEach(subtaskReq -> {
+                    TodoSubtask subtask = TodoSubtask.builder()
+                            .title(subtaskReq.getTitle())
+                            .completed(false)
+                            .build();
+                    todo.addSubtask(subtask);
+                });
+            }
+            if (request.getReminders() != null) {
+                request.getReminders().forEach(reminderReq -> {
+                    TodoReminder reminder = TodoReminder.builder()
+                            .remindAt(todoMapper.stringToLocalDateTime(reminderReq.getRemindAt()))
+                            .message(reminderReq.getMessage())
+                            .sent(false)
+                            .build();
+                    todo.addReminder(reminder);
+                });
+            }
+            return todoMapper.todoToTodoResponse(todoRepository.save(todo));
+        } catch (IllegalStateException e) {
+            throw new Exception("Authentication error: " + e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Validation error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new Exception("Failed to create todo: " + e.getMessage(), e);
         }
-        if (request.getReminders() != null) {
-            request.getReminders().forEach(reminderReq -> {
-                TodoReminder reminder = TodoReminder.builder()
-                        .remindAt(todoMapper.stringToLocalDateTime(reminderReq.getRemindAt()))
-                        .message(reminderReq.getMessage())
-                        .sent(false)
-                        .build();
-                todo.addReminder(reminder);
-            });
-        }
-        return todoMapper.todoToTodoResponse(todoRepository.save(todo));
     }
 
     @Override
@@ -108,7 +132,8 @@ public class TodoServiceImpl implements TodoService {
     @Override
     @Transactional(readOnly = true)
     public TodoResponseDTO getTodoById(String id) throws Exception {
-        return todoRepository.findById(id)
+        return todoRepository
+                .findById(id)
                 .map(todoMapper::todoToTodoResponse)
                 .orElseThrow(() -> new EntityNotFoundException("Todo not found"));
     }
@@ -122,28 +147,100 @@ public class TodoServiceImpl implements TodoService {
         return todoMapper.todosToTodoResponses(todos);
     }
 
-
     @Override
     public TodoSummaryResDTO getSummary() throws Exception {
-        List<Todo> todos = todoRepository.findAll();
-        // Placeholder for your actual summary logic
-        return new TodoSummaryResDTO();
+        String userId = SecurityUtils.getCurrentUserId();
+        List<Todo> todos = todoRepository.findAll(
+                (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("userId"), userId));
+
+        // Calculate summary statistics
+        int total = todos.size();
+
+        // Count by status
+        long pending = todos.stream()
+                .filter(t -> t.getStatus().name().equals("PENDING"))
+                .count();
+        long inProgress = todos.stream()
+                .filter(t -> t.getStatus().name().equals("IN_PROGRESS"))
+                .count();
+        long completed = todos.stream()
+                .filter(t -> t.getStatus().name().equals("COMPLETED"))
+                .count();
+        long cancelled = todos.stream()
+                .filter(t -> t.getStatus().name().equals("CANCELLED"))
+                .count();
+
+        // Count by priority
+        long urgent = todos.stream()
+                .filter(t -> t.getPriority().name().equals("URGENT"))
+                .count();
+        long high = todos.stream()
+                .filter(t -> t.getPriority().name().equals("HIGH"))
+                .count();
+        long medium = todos.stream()
+                .filter(t -> t.getPriority().name().equals("MEDIUM"))
+                .count();
+        long low =
+                todos.stream().filter(t -> t.getPriority().name().equals("LOW")).count();
+
+        // Calculate overdue, due today, and due this week
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = now.toLocalDate().atTime(23, 59, 59);
+        LocalDateTime endOfWeek =
+                now.plusDays(7 - now.getDayOfWeek().getValue()).toLocalDate().atTime(23, 59, 59);
+
+        long overdue = todos.stream()
+                .filter(t -> t.getDueDate() != null
+                        && t.getDueDate().isBefore(startOfDay)
+                        && !t.getStatus().name().equals("COMPLETED"))
+                .count();
+
+        long dueToday = todos.stream()
+                .filter(t -> t.getDueDate() != null
+                        && t.getDueDate().isAfter(startOfDay)
+                        && t.getDueDate().isBefore(endOfDay))
+                .count();
+
+        long dueThisWeek = todos.stream()
+                .filter(t -> t.getDueDate() != null
+                        && t.getDueDate().isAfter(endOfDay)
+                        && t.getDueDate().isBefore(endOfWeek))
+                .count();
+
+        return TodoSummaryResDTO.builder()
+                .total(total)
+                .byStatus(TodoSummaryResDTO.StatusCount.builder()
+                        .pending((int) pending)
+                        .inProgress((int) inProgress)
+                        .completed((int) completed)
+                        .cancelled((int) cancelled)
+                        .build())
+                .byPriority(TodoSummaryResDTO.PriorityCount.builder()
+                        .urgent((int) urgent)
+                        .high((int) high)
+                        .medium((int) medium)
+                        .low((int) low)
+                        .build())
+                .overdue((int) overdue)
+                .dueToday((int) dueToday)
+                .dueThisWeek((int) dueThisWeek)
+                .build();
     }
 
     @Override
     public TodoResponseDTO addSubtask(String todoId, String title) throws Exception {
         Todo todo = todoRepository.findById(todoId).orElseThrow(() -> new EntityNotFoundException("Todo not found"));
-        TodoSubtask subtask = TodoSubtask.builder()
-                .title(title)
-                .completed(false)
-                .build();
+        TodoSubtask subtask =
+                TodoSubtask.builder().title(title).completed(false).build();
         todo.addSubtask(subtask);
         return todoMapper.todoToTodoResponse(todoRepository.save(todo));
     }
 
     @Override
     public TodoResponseDTO toggleSubtaskCompletion(String subtaskId) throws Exception {
-        TodoSubtask subtask = subtaskRepository.findById(subtaskId)
+        TodoSubtask subtask = subtaskRepository
+                .findById(subtaskId)
                 .orElseThrow(() -> new EntityNotFoundException("Subtask not found"));
         subtask.setCompleted(!subtask.isCompleted());
         subtaskRepository.save(subtask);

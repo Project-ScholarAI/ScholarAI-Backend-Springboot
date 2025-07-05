@@ -1,19 +1,18 @@
 package dev.project.scholar_ai.controller.todo;
 
+import dev.project.scholar_ai.dto.common.APIResponse;
 import dev.project.scholar_ai.dto.todo.request.*;
 import dev.project.scholar_ai.dto.todo.response.TodoResponseDTO;
 import dev.project.scholar_ai.dto.todo.response.TodoSummaryResDTO;
-import dev.project.scholar_ai.dto.common.APIResponse;
 import dev.project.scholar_ai.service.todo.TodoService;
 import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/todo")
@@ -27,16 +26,29 @@ public class TodoController {
     public ResponseEntity<APIResponse<TodoResponseDTO>> createTodo(@RequestBody @Valid TodoCreateReqDTO request) {
         try {
             TodoResponseDTO todo = todoService.createTodo(request);
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.CREATED.value(), "Todo created successfully", todo));
-        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.CREATED.value(), "Todo created successfully", todo));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+                    .body(APIResponse.error(
+                            HttpStatus.BAD_REQUEST.value(), "Validation error: " + e.getMessage(), null));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(APIResponse.error(
+                            HttpStatus.UNAUTHORIZED.value(), "Authentication error: " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("Error creating todo", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to create todo: " + e.getMessage(),
+                            null));
         }
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<APIResponse<TodoResponseDTO>> updateStatus(@PathVariable String id,
-                                                                     @RequestBody @Valid TodoStatusUpdateReqDTO statusUpdate) {
+    public ResponseEntity<APIResponse<TodoResponseDTO>> updateStatus(
+            @PathVariable String id, @RequestBody @Valid TodoStatusUpdateReqDTO statusUpdate) {
         try {
             TodoResponseDTO todo = todoService.updateStatus(id, statusUpdate);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Status updated successfully", todo));
@@ -47,8 +59,8 @@ public class TodoController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<APIResponse<TodoResponseDTO>> updateTodo(@PathVariable String id,
-                                                                   @RequestBody @Valid TodoUpdateReqDTO updateReqDTO) {
+    public ResponseEntity<APIResponse<TodoResponseDTO>> updateTodo(
+            @PathVariable String id, @RequestBody @Valid TodoUpdateReqDTO updateReqDTO) {
         try {
             TodoResponseDTO todo = todoService.updateTodo(id, updateReqDTO);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Todo updated successfully", todo));
@@ -81,7 +93,8 @@ public class TodoController {
     }
 
     @GetMapping
-    public ResponseEntity<APIResponse<List<TodoResponseDTO>>> filterTodos(TodoFiltersReqDTO filters, Principal principal) {
+    public ResponseEntity<APIResponse<List<TodoResponseDTO>>> filterTodos(
+            TodoFiltersReqDTO filters, Principal principal) {
         try {
             List<TodoResponseDTO> todos = todoService.filterTodos(filters);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Todos fetched successfully", todos));
@@ -92,7 +105,8 @@ public class TodoController {
     }
 
     @PostMapping("/{id}/subtask")
-    public ResponseEntity<APIResponse<TodoResponseDTO>> addSubtask(@PathVariable String id, @RequestParam String title) {
+    public ResponseEntity<APIResponse<TodoResponseDTO>> addSubtask(
+            @PathVariable String id, @RequestParam String title) {
         try {
             TodoResponseDTO todo = todoService.addSubtask(id, title);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Subtask added successfully", todo));
@@ -103,7 +117,8 @@ public class TodoController {
     }
 
     @PatchMapping("/{todoId}/subtask/{subtaskId}/toggle")
-    public ResponseEntity<APIResponse<TodoResponseDTO>> toggleSubtask(@PathVariable String todoId, @PathVariable String subtaskId) {
+    public ResponseEntity<APIResponse<TodoResponseDTO>> toggleSubtask(
+            @PathVariable String todoId, @PathVariable String subtaskId) {
         try {
             TodoResponseDTO todo = todoService.toggleSubtaskCompletion(subtaskId);
             return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Subtask toggled successfully", todo));
@@ -117,7 +132,8 @@ public class TodoController {
     public ResponseEntity<APIResponse<TodoSummaryResDTO>> getSummary() {
         try {
             TodoSummaryResDTO summary = todoService.getSummary();
-            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), "Summary fetched successfully", summary));
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Summary fetched successfully", summary));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(APIResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null));

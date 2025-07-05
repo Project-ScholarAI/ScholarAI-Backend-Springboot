@@ -19,6 +19,7 @@ public interface TodoMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
     @Mapping(target = "userId", expression = "java(dev.project.scholar_ai.security.SecurityUtils.getCurrentUserId())")
+    @Mapping(target = "dueDate", source = "dueDate", qualifiedByName = "stringToLocalDateTime")
     @Mapping(target = "createdAt", expression = "java(LocalDateTime.now())")
     @Mapping(target = "updatedAt", expression = "java(LocalDateTime.now())")
     @Mapping(target = "completedAt", ignore = true)
@@ -49,8 +50,22 @@ public interface TodoMapper {
 
     @Named("stringToLocalDateTime")
     default LocalDateTime stringToLocalDateTime(String dateString) {
-        if (dateString == null) return null;
-        return LocalDateTime.parse(dateString, DateTimeFormatter.ISO_DATE_TIME);
+        if (dateString == null || dateString.trim().isEmpty()) return null;
+        try {
+            // Handle ISO strings with milliseconds and timezone (e.g., "2025-07-07T08:30:00.000Z")
+            if (dateString.contains("Z") || dateString.contains("+") || dateString.contains("-")) {
+                return java.time.OffsetDateTime.parse(dateString).toLocalDateTime();
+            }
+            // Handle local date time strings
+            return LocalDateTime.parse(dateString, DateTimeFormatter.ISO_DATE_TIME);
+        } catch (Exception e) {
+            // Fallback: try different common formats
+            try {
+                return LocalDateTime.parse(dateString.replace("Z", ""), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (Exception e2) {
+                throw new IllegalArgumentException("Unable to parse date string: " + dateString, e2);
+            }
+        }
     }
 
     @Autowired

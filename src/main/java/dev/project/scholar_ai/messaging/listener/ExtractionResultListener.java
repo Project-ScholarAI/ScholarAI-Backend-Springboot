@@ -1,7 +1,6 @@
 package dev.project.scholar_ai.messaging.listener;
 
 import dev.project.scholar_ai.dto.agent.response.ExtractionResult;
-import dev.project.scholar_ai.enums.ExtractionStatus;
 import dev.project.scholar_ai.service.extraction.ExtractionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,7 @@ public class ExtractionResultListener {
 
                 // Trigger summarization if text extraction was successful
                 extractionService.triggerSummarization(result.getPaperId(), result.getExtractedText());
-                
+
             } else {
                 log.warn(
                         "⚠️ Text extraction failed or incomplete for paper ID: {} - Status: {}, Error: {}",

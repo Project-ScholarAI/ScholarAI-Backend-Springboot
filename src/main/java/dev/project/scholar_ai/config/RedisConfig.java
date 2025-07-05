@@ -23,13 +23,13 @@ public class RedisConfig {
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
     @Value("${spring.data.redis.host}")
-    private String redisHost;         // no default → will fail if missing
+    private String redisHost; // no default → will fail if missing
 
     @Value("${spring.data.redis.port:6379}")
     private int redisPort;
 
     @Value("${spring.data.redis.password}")
-    private String redisPassword;     // no default → will fail if missing
+    private String redisPassword; // no default → will fail if missing
 
     // -------------------------------------------------------------------------
     // Connection factory
@@ -37,11 +37,10 @@ public class RedisConfig {
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
 
-        validateProps();              // abort if a required prop is empty
+        validateProps(); // abort if a required prop is empty
 
-        RedisStandaloneConfiguration cfg =
-                new RedisStandaloneConfiguration(redisHost, redisPort);
-        cfg.setUsername("default");                       // ACL user (Redis ≥ 6)
+        RedisStandaloneConfiguration cfg = new RedisStandaloneConfiguration(redisHost, redisPort);
+        cfg.setUsername("default"); // ACL user (Redis ≥ 6)
         cfg.setPassword(RedisPassword.of(redisPassword)); // always send password
 
         LettuceClientConfiguration clientCfg = LettuceClientConfiguration.builder()
@@ -58,8 +57,7 @@ public class RedisConfig {
     // RedisTemplate
     // -------------------------------------------------------------------------
     @Bean
-    public RedisTemplate<String, String> redisTemplate(
-            LettuceConnectionFactory connectionFactory) {
+    public RedisTemplate<String, String> redisTemplate(LettuceConnectionFactory connectionFactory) {
 
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -73,8 +71,7 @@ public class RedisConfig {
     // -------------------------------------------------------------------------
     private void validateProps() {
         if (redisHost == null || redisHost.isBlank()) {
-            throw new IllegalStateException(
-                    "`spring.data.redis.host` must be configured");
+            throw new IllegalStateException("`spring.data.redis.host` must be configured");
         }
         if (redisPassword == null || redisPassword.isBlank()) {
             throw new IllegalStateException(

@@ -18,7 +18,8 @@ public class UserAccountService {
      * Fetch the user account profile by user ID.
      */
     public UserAccount getAccount(UUID userId) {
-        return userAccountRepository.findById(userId)
+        return userAccountRepository
+                .findById(userId)
                 .orElseThrow(() -> new RuntimeException(("User profile not found for ID: " + userId)));
     }
 
@@ -26,7 +27,8 @@ public class UserAccountService {
      * Fetch the user account by email.
      */
     public UserAccount getAccountByEmail(String email) {
-        return userAccountRepository.findByEmail(email)
+        return userAccountRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User profile not found for email: " + email));
     }
 
@@ -49,10 +51,8 @@ public class UserAccountService {
         if (userAccountDTO.getGithubUrl() != null) userAccount.setGithubUrl(userAccountDTO.getGithubUrl());
         if (userAccountDTO.getFacebookUrl() != null) userAccount.setFacebookUrl(userAccountDTO.getFacebookUrl());
         if (userAccountDTO.getOrcidId() != null) userAccount.setOrcidId(userAccountDTO.getOrcidId());
-        if (userAccountDTO.getAddressLine1() != null)
-            userAccount.setAddressLine1(userAccountDTO.getAddressLine1());
-        if (userAccountDTO.getAddressLine2() != null)
-            userAccount.setAddressLine2(userAccountDTO.getAddressLine2());
+        if (userAccountDTO.getAddressLine1() != null) userAccount.setAddressLine1(userAccountDTO.getAddressLine1());
+        if (userAccountDTO.getAddressLine2() != null) userAccount.setAddressLine2(userAccountDTO.getAddressLine2());
         if (userAccountDTO.getCity() != null) userAccount.setCity(userAccountDTO.getCity());
         if (userAccountDTO.getStateProvinceRegion() != null)
             userAccount.setStateProvinceRegion(userAccountDTO.getStateProvinceRegion());

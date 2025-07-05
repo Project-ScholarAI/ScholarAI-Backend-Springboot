@@ -7,13 +7,11 @@ import dev.project.scholar_ai.model.core.todo.enums.TodoPriority;
 import dev.project.scholar_ai.model.core.todo.enums.TodoStatus;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.jpa.domain.Specification;
 
 public class TodoSpecification {
 
@@ -68,12 +66,9 @@ public class TodoSpecification {
 
             if (filters.getSearch() != null && !filters.getSearch().isEmpty()) {
                 String keyword = "%" + filters.getSearch().toLowerCase() + "%";
-                predicates.add(
-                        cb.or(
-                                cb.like(cb.lower(root.get("title")), keyword),
-                                cb.like(cb.lower(root.get("description")), keyword)
-                        )
-                );
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), keyword),
+                        cb.like(cb.lower(root.get("description")), keyword)));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
