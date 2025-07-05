@@ -141,5 +141,12 @@ public class TodoServiceImpl implements TodoService {
         return todoMapper.todoToTodoResponse(todoRepository.save(todo));
     }
 
-   
+    @Override
+    public TodoResponseDTO toggleSubtaskCompletion(String subtaskId) throws Exception {
+        TodoSubtask subtask = subtaskRepository.findById(subtaskId)
+                .orElseThrow(() -> new EntityNotFoundException("Subtask not found"));
+        subtask.setCompleted(!subtask.isCompleted());
+        subtaskRepository.save(subtask);
+        return todoMapper.todoToTodoResponse(subtask.getTodo());
+    }
 }
