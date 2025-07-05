@@ -99,5 +99,29 @@ public class TodoServiceImpl implements TodoService {
         return todoMapper.todoToTodoResponse(todoRepository.save(todo));
     }
 
+    @Override
+    public void deleteTodo(String id) throws Exception {
+        if (!todoRepository.existsById(id)) throw new EntityNotFoundException("Todo not found");
+        todoRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TodoResponseDTO getTodoById(String id) throws Exception {
+        return todoRepository.findById(id)
+                .map(todoMapper::todoToTodoResponse)
+                .orElseThrow(() -> new EntityNotFoundException("Todo not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TodoResponseDTO> filterTodos(TodoFiltersReqDTO filters) throws Exception {
+        String userId = SecurityUtils.getCurrentUserId();
+        Specification<Todo> spec = TodoSpecification.fromFilters(filters, userId);
+        List<Todo> todos = todoRepository.findAll(spec);
+        return todoMapper.todosToTodoResponses(todos);
+    }
+
+
    
 }
