@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -27,17 +28,20 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         transactionManagerRef = "transactionManager")
 public class CoreDataSourceConfig {
 
+    @Primary
     @Bean
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties coreDataSourceProperties() {
         return new DataSourceProperties();
     }
 
+    @Primary
     @Bean
     public DataSource dataSource() {
         return coreDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
+    @Primary
     @Bean(name = "entityManagerFactory")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Qualifier("dataSource") DataSource dataSource) {
 
@@ -64,6 +68,7 @@ public class CoreDataSourceConfig {
         return factory;
     }
 
+    @Primary
     @Bean(name = "transactionManager")
     public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);

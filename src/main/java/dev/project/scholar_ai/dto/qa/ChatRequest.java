@@ -1,11 +1,10 @@
 package dev.project.scholar_ai.dto.qa;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-
-import java.util.UUID;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

@@ -52,11 +52,12 @@ public class AuthService {
 
     // register new user
     public void registerUser(String email, String password) {
-        //if exists in social_users table, not allowed
+        // if exists in social_users table, not allowed
         if (authUserRepository.findByEmail(email).isPresent()) {
             throw new BadCredentialsException("User with email " + email + " already exists.");
         } else if (socialUserRepository.findByEmail(email).isPresent()) {
-            throw new BadCredentialsException("This " + email +" is already registered via Google/Github login. Please use social auth to continue.");
+            throw new BadCredentialsException("This " + email
+                    + " is already registered via Google/Github login. Please use social auth to continue.");
         }
 
         AuthUser newUser = new AuthUser();
@@ -67,7 +68,7 @@ public class AuthService {
 
         // Create linked user account
         UserAccount account = new UserAccount();
-        account.setId(savedUser.getId());           // must match @Id of AuthUser
+        account.setId(savedUser.getId()); // must match @Id of AuthUser
         account.setEmail(savedUser.getEmail());
         account.setCreatedAt(Instant.now());
         account.setUpdatedAt(Instant.now());
@@ -86,9 +87,10 @@ public class AuthService {
         String refreshToken = jwtUtils.generateRefreshToken(userDetails.getUsername());
         refreshTokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
 
-        //if user exists in social_users , then not allow email, pass login
+        // if user exists in social_users , then not allow email, pass login
         if (socialUserRepository.findByEmail(email).isPresent()) {
-            throw new BadCredentialsException("This " + email +" is already registered via Google/Github login. Please use social auth to continue.");
+            throw new BadCredentialsException("This " + email
+                    + " is already registered via Google/Github login. Please use social auth to continue.");
         }
 
         AuthUser user = authUserRepository

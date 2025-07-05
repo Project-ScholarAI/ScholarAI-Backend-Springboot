@@ -49,11 +49,12 @@ public interface PaperRepository extends JpaRepository<Paper, UUID> {
 
     // Text extraction related queries
     List<Paper> findByPdfUrlIsNotNullAndExtractedTextIsNull();
-    
+
     List<Paper> findByExtractionStatus(dev.project.scholar_ai.enums.ExtractionStatus status);
-    
+
     Page<Paper> findByExtractionStatus(dev.project.scholar_ai.enums.ExtractionStatus status, Pageable pageable);
-    
+
     // Search methods with pagination
-    Page<Paper> findByTitleContainingIgnoreCaseOrAbstractTextContainingIgnoreCase(String titleQuery, String abstractQuery, Pageable pageable);
+    Page<Paper> findByTitleContainingIgnoreCaseOrAbstractTextContainingIgnoreCase(
+            String titleQuery, String abstractQuery, Pageable pageable);
 }
