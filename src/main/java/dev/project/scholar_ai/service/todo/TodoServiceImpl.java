@@ -123,5 +123,12 @@ public class TodoServiceImpl implements TodoService {
     }
 
 
+    @Override
+    public TodoSummaryResDTO getSummary() throws Exception {
+        List<Todo> todos = todoRepository.findAll();
+        // Placeholder for your actual summary logic
+        return new TodoSummaryResDTO();
+    }
+
    
 }
