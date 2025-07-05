@@ -36,11 +36,6 @@ public interface TodoMapper {
 
     List<TodoResponseDTO> todosToTodoResponses(List<Todo> todos);
 
-    @Mappings({
-            @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "localDateTimeToString"),
-            @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "localDateTimeToString")
-    })
-
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "localDateTimeToString")
     TodoResponseDTO.SubtaskResponse subtaskToSubtaskResponse(TodoSubtask subtask);
 
