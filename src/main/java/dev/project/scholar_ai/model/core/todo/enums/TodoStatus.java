@@ -22,7 +22,7 @@ public enum TodoStatus {
             return null;
         }
         return Stream.of(TodoStatus.values())
-                .filter(status -> status.name().equalsIgnoreCase(value.replace("_", "")))
+                .filter(status -> status.name().replace("_", "").equalsIgnoreCase(value.replace("_", "")))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown enum type " + value + ", Allowed values are "
                         + Stream.of(values()).map(TodoStatus::name).toString()));
