@@ -1,4 +1,4 @@
-package dev.project.scholar_ai.controller;
+package dev.project.scholar_ai.controller.todo;
 
 import dev.project.scholar_ai.dto.todo.request.*;
 import dev.project.scholar_ai.dto.todo.response.TodoResponseDTO;
