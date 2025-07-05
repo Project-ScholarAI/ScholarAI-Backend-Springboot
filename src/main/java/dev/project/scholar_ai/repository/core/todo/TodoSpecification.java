@@ -66,7 +66,26 @@ public final class TodoSpecification {
                 // Ignoring invalid date formats for now, but could add logging.
             }
 
-           
+            // Project ID filter
+            if (filters.getProjectId() != null && !filters.getProjectId().isBlank()) {
+                predicates.add(criteriaBuilder.equal(root.get("relatedProjectId"), filters.getProjectId()));
+            }
+
+            // Search query filter (title and description)
+            if (filters.getSearch() != null && !filters.getSearch().isBlank()) {
+                String searchPattern = "%" + filters.getSearch().toLowerCase() + "%";
+                Predicate titlePredicate =
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), searchPattern);
+                Predicate descriptionPredicate =
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern);
+                predicates.add(criteriaBuilder.or(titlePredicate, descriptionPredicate));
+            }
+
+            // Tags filter
+            if (!CollectionUtils.isEmpty(filters.getTags())) {
+                query.distinct(true); // Ensure distinct results when joining
+                predicates.add(root.join("tags").in(filters.getTags()));
+            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
