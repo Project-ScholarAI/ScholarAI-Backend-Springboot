@@ -147,41 +147,55 @@ public class TodoServiceImpl implements TodoService {
         return todoMapper.todosToTodoResponses(todos);
     }
 
+    private static boolean enumEquals(String actual, String expected) {
+        if (actual == null || expected == null) return false;
+        return actual.replace("_", "").equalsIgnoreCase(expected.replace("_", ""));
+    }
+
     @Override
     public TodoSummaryResDTO getSummary() throws Exception {
         String userId = SecurityUtils.getCurrentUserId();
         List<Todo> todos = todoRepository.findAll(
                 (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("userId"), userId));
 
+        // Debug: print all status and priority values
+        System.out.println("[DEBUG] Todo statuses:");
+        todos.forEach(t -> System.out.println("  status=" + t.getStatus() + ", priority=" + t.getPriority()));
+
         // Calculate summary statistics
         int total = todos.size();
 
         // Count by status
         long pending = todos.stream()
-                .filter(t -> t.getStatus().name().equals("PENDING"))
+                .filter(t -> enumEquals(t.getStatus().name(), "PENDING"))
                 .count();
         long inProgress = todos.stream()
-                .filter(t -> t.getStatus().name().equals("IN_PROGRESS"))
+                .filter(t -> enumEquals(t.getStatus().name(), "IN_PROGRESS"))
                 .count();
         long completed = todos.stream()
-                .filter(t -> t.getStatus().name().equals("COMPLETED"))
+                .filter(t -> enumEquals(t.getStatus().name(), "COMPLETED"))
                 .count();
         long cancelled = todos.stream()
-                .filter(t -> t.getStatus().name().equals("CANCELLED"))
+                .filter(t -> enumEquals(t.getStatus().name(), "CANCELLED"))
                 .count();
 
         // Count by priority
         long urgent = todos.stream()
-                .filter(t -> t.getPriority().name().equals("URGENT"))
+                .filter(t -> enumEquals(t.getPriority().name(), "URGENT"))
                 .count();
         long high = todos.stream()
-                .filter(t -> t.getPriority().name().equals("HIGH"))
+                .filter(t -> enumEquals(t.getPriority().name(), "HIGH"))
                 .count();
         long medium = todos.stream()
-                .filter(t -> t.getPriority().name().equals("MEDIUM"))
+                .filter(t -> enumEquals(t.getPriority().name(), "MEDIUM"))
                 .count();
-        long low =
-                todos.stream().filter(t -> t.getPriority().name().equals("LOW")).count();
+        long low = todos.stream()
+                .filter(t -> enumEquals(t.getPriority().name(), "LOW"))
+                .count();
+
+        // Debug: print all summary counts
+        System.out.println("[DEBUG] pending=" + pending + ", inProgress=" + inProgress + ", completed=" + completed + ", cancelled=" + cancelled);
+        System.out.println("[DEBUG] urgent=" + urgent + ", high=" + high + ", medium=" + medium + ", low=" + low);
 
         // Calculate overdue, due today, and due this week
         LocalDateTime now = LocalDateTime.now();
@@ -193,7 +207,7 @@ public class TodoServiceImpl implements TodoService {
         long overdue = todos.stream()
                 .filter(t -> t.getDueDate() != null
                         && t.getDueDate().isBefore(startOfDay)
-                        && !t.getStatus().name().equals("COMPLETED"))
+                        && !enumEquals(t.getStatus().name(), "COMPLETED"))
                 .count();
 
         long dueToday = todos.stream()

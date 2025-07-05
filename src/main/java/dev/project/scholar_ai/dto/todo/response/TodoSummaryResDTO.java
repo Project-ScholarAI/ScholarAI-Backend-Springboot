@@ -32,12 +32,16 @@ public class TodoSummaryResDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class StatusCount {
+        @JsonProperty("pending")
         private int pending;
 
         @JsonProperty("in_progress")
         private int inProgress;
 
+        @JsonProperty("completed")
         private int completed;
+
+        @JsonProperty("cancelled")
         private int cancelled;
     }
 
@@ -46,9 +50,13 @@ public class TodoSummaryResDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PriorityCount {
+        @JsonProperty("urgent")
         private int urgent;
+        @JsonProperty("high")
         private int high;
+        @JsonProperty("medium")
         private int medium;
+        @JsonProperty("low")
         private int low;
     }
 }
