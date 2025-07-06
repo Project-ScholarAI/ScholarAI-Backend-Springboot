@@ -35,8 +35,8 @@ public class ExtractionResultListener {
                         result.getTextLength(),
                         result.getExtractionMethod());
 
-                // Trigger summarization if text extraction was successful
-                extractionService.triggerSummarization(result.getPaperId(), result.getExtractedText());
+                // Trigger text structuring if text extraction was successful
+                extractionService.triggerStructuring(result.getPaperId(), result.getExtractedText());
 
             } else {
                 log.warn(

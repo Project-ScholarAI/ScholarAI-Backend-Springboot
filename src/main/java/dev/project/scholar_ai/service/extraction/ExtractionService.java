@@ -1,11 +1,10 @@
 package dev.project.scholar_ai.service.extraction;
 
-import dev.project.scholar_ai.dto.agent.request.SummarizationRequest;
 import dev.project.scholar_ai.dto.agent.response.ExtractionResult;
 import dev.project.scholar_ai.enums.ExtractionStatus;
-import dev.project.scholar_ai.messaging.publisher.SummarizationRequestSender;
 import dev.project.scholar_ai.model.paper.metadata.Paper;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
+import dev.project.scholar_ai.service.structuring.StructuringService;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExtractionService {
 
     private final PaperRepository paperRepository;
-    private final SummarizationRequestSender summarizationRequestSender;
+    private final StructuringService structuringService;
 
     /**
      * Updates a paper with extracted text content from the extraction result.
@@ -35,8 +34,9 @@ public class ExtractionService {
                     .findById(result.getPaperId())
                     .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + result.getPaperId()));
 
-            // Update paper with extracted text
-            paper.setExtractedText(result.getExtractedText());
+            // Sanitize and update paper with extracted text
+            String sanitizedText = sanitizeText(result.getExtractedText());
+            paper.setExtractedText(sanitizedText);
             paper.setExtractionStatus(ExtractionStatus.valueOf(result.getStatus()));
             paper.setExtractedAt(LocalDateTime.now());
 
@@ -55,31 +55,23 @@ public class ExtractionService {
     }
 
     /**
-     * Triggers summarization for a paper with extracted text.
+     * Triggers text structuring for a paper with extracted text.
      *
-     * @param paperId The ID of the paper to summarize
+     * @param paperId The ID of the paper to structure
      * @param extractedText The extracted text content
      */
-    public void triggerSummarization(UUID paperId, String extractedText) {
+    public void triggerStructuring(UUID paperId, String extractedText) {
         try {
-            log.info("Triggering summarization for paper: {}", paperId);
+            log.info("Triggering text structuring for paper: {}", paperId);
 
-            // Create summarization request
-            SummarizationRequest summarizationRequest = SummarizationRequest.builder()
-                    .correlationId(UUID.randomUUID().toString())
-                    .paperId(paperId)
-                    .content(extractedText)
-                    .requestedBy("extraction-service")
-                    .build();
+            // Trigger structuring which will later trigger summarization
+            structuringService.triggerStructuring(paperId, extractedText, "extraction-service");
 
-            // Send summarization request
-            summarizationRequestSender.send(summarizationRequest);
-
-            log.info("Summarization request sent for paper: {}", paperId);
+            log.info("Text structuring request sent for paper: {}", paperId);
 
         } catch (Exception e) {
-            log.error("Failed to trigger summarization for paper {}: {}", paperId, e.getMessage(), e);
-            // Don't throw here - extraction was successful, summarization failure shouldn't break the flow
+            log.error("Failed to trigger text structuring for paper {}: {}", paperId, e.getMessage(), e);
+            // Don't throw here - extraction was successful, structuring failure shouldn't break the flow
         }
     }
 
@@ -119,5 +111,32 @@ public class ExtractionService {
             log.error("Failed to initiate extraction for paper {}: {}", paperId, e.getMessage(), e);
             throw new RuntimeException("Failed to initiate text extraction", e);
         }
+    }
+
+    /**
+     * Sanitizes text to remove null bytes and other problematic characters for PostgreSQL.
+     *
+     * @param text The text to sanitize
+     * @return Sanitized text safe for database storage
+     */
+    private String sanitizeText(String text) {
+        if (text == null) {
+            return null;
+        }
+
+        // Remove null bytes (0x00) and other control characters except newlines and tabs
+        String sanitized = text.replaceAll("[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]", "");
+        
+        // Trim excessive whitespace
+        sanitized = sanitized.replaceAll("\\s+", " ").trim();
+        
+        // Limit text length if too long (optional safety measure)
+        if (sanitized.length() > 1_000_000) { // 1MB limit
+            log.warn("Truncating very long extracted text from {} to {} characters", 
+                    sanitized.length(), 1_000_000);
+            sanitized = sanitized.substring(0, 1_000_000) + "... [TRUNCATED]";
+        }
+        
+        return sanitized;
     }
 }

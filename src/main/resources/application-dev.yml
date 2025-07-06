@@ -150,6 +150,11 @@ scholarai:
       routing-key: scholarai.extraction
       completed-queue: scholarai.extraction.completed.queue
       completed-routing-key: scholarai.extraction.completed
+    structuring:
+      queue: scholarai.structuring.queue
+      routing-key: scholarai.structuring
+      completed-queue: scholarai.structuring.completed.queue
+      completed-routing-key: scholarai.structuring.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization

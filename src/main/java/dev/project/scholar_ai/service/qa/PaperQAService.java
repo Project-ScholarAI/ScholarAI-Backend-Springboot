@@ -11,6 +11,7 @@ import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
 import dev.project.scholar_ai.repository.qa.QAMessageRepository;
 import dev.project.scholar_ai.repository.qa.QASessionRepository;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,10 +50,19 @@ public class PaperQAService {
         try {
             log.info("Processing chat request for paper: {} by user: {}", paperId, userEmail);
 
-            // Get user
-            AuthUser user = authUserRepository
-                    .findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
+            // Get user (handle anonymous users for testing)
+            AuthUser user;
+            if ("anonymous".equals(userEmail)) {
+                // Create a temporary anonymous user for testing
+                user = new AuthUser();
+                user.setId(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+                user.setEmail("anonymous");
+                user.setRole("ANONYMOUS");
+            } else {
+                user = authUserRepository
+                        .findByEmail(userEmail)
+                        .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
+            }
 
             // Get paper
             Paper paper = paperRepository
@@ -65,35 +75,43 @@ public class PaperQAService {
                 return new ChatResponse("Paper has no extracted text. Please extract text first.");
             }
 
-            // Get or create session
-            QASession session = getOrCreateSession(request, user, paper);
+            // Handle session and messages (skip for anonymous users)
+            QASession session = null;
+            List<QAMessage> recentMessages = new ArrayList<>();
+            
+            if (!"anonymous".equals(userEmail)) {
+                // Get or create session for authenticated users
+                session = getOrCreateSession(request, user, paper);
 
-            // Save user message
-            QAMessage userMessage = QAMessage.builder()
-                    .session(session)
-                    .role(MessageRole.USER)
-                    .content(request.getMessage())
-                    .metadata(new HashMap<>())
-                    .build();
-            qaMessageRepository.save(userMessage);
+                // Save user message
+                QAMessage userMessage = QAMessage.builder()
+                        .session(session)
+                        .role(MessageRole.USER)
+                        .content(request.getMessage())
+                        .metadata(new HashMap<>())
+                        .build();
+                qaMessageRepository.save(userMessage);
 
-            // Get conversation history
-            List<QAMessage> recentMessages =
-                    qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
+                // Get conversation history
+                recentMessages = qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
+            }
 
             // Call FastAPI QA service
             String response = callFastAPIQAService(paper, recentMessages, request.getMessage());
 
-            // Save assistant response
-            QAMessage assistantMessage = QAMessage.builder()
-                    .session(session)
-                    .role(MessageRole.ASSISTANT)
-                    .content(response)
-                    .metadata(new HashMap<>())
-                    .build();
-            qaMessageRepository.save(assistantMessage);
+            // Save assistant response (only for authenticated users)
+            if (!"anonymous".equals(userEmail) && session != null) {
+                QAMessage assistantMessage = QAMessage.builder()
+                        .session(session)
+                        .role(MessageRole.ASSISTANT)
+                        .content(response)
+                        .metadata(new HashMap<>())
+                        .build();
+                qaMessageRepository.save(assistantMessage);
+            }
 
-            return new ChatResponse(session.getId(), response);
+            UUID sessionId = (session != null) ? session.getId() : null;
+            return new ChatResponse(sessionId, response);
 
         } catch (Exception e) {
             log.error("Failed to process chat request for paper {}: {}", paperId, e.getMessage(), e);
@@ -126,7 +144,7 @@ public class PaperQAService {
      */
     private String callFastAPIQAService(Paper paper, List<QAMessage> conversationHistory, String query) {
         try {
-            String url = fastApiBaseUrl + "/papers/" + paper.getId() + "/chat";
+            String url = fastApiBaseUrl + "/api/v1/papers/" + paper.getId() + "/chat";
 
             // Build request payload
             Map<String, Object> payload = new HashMap<>();
@@ -161,7 +179,19 @@ public class PaperQAService {
     private Map<String, Object> buildPaperMetadata(Paper paper) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", paper.getTitle());
-        metadata.put("authors", paper.getAuthors());
+        
+        // Handle authors safely - convert to string representation to avoid lazy loading
+        try {
+            if (paper.getAuthors() != null) {
+                metadata.put("authors", paper.getAuthors().toString());
+            } else {
+                metadata.put("authors", "Unknown");
+            }
+        } catch (Exception e) {
+            // Fallback if authors can't be accessed
+            metadata.put("authors", "Unknown");
+        }
+        
         metadata.put("abstract", paper.getAbstractText());
         metadata.put("source", paper.getSource());
         metadata.put("publication_date", paper.getPublicationDate());

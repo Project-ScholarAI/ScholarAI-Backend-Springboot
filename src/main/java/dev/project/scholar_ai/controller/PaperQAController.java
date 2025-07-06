@@ -29,13 +29,14 @@ public class PaperQAController {
             @PathVariable UUID paperId, @RequestBody ChatRequest request, Authentication authentication) {
 
         try {
-            log.info("Chat request received for paper: {} by user: {}", paperId, authentication.getName());
+            String username = authentication != null ? authentication.getName() : "anonymous";
+            log.info("Chat request received for paper: {} by user: {}", paperId, username);
 
             if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(new ChatResponse("Message cannot be empty"));
             }
 
-            ChatResponse response = paperQAService.chatWithPaper(paperId, request, authentication.getName());
+            ChatResponse response = paperQAService.chatWithPaper(paperId, request, username);
 
             return ResponseEntity.ok(response);
 
@@ -54,7 +55,8 @@ public class PaperQAController {
             @PathVariable UUID sessionId, Authentication authentication) {
 
         try {
-            List<QAMessage> messages = paperQAService.getConversationHistory(sessionId, authentication.getName());
+            String username = authentication != null ? authentication.getName() : "anonymous";
+            List<QAMessage> messages = paperQAService.getConversationHistory(sessionId, username);
 
             return ResponseEntity.ok(messages);
 
@@ -71,11 +73,13 @@ public class PaperQAController {
     public ResponseEntity<List<QASession>> getUserSessions(Authentication authentication) {
 
         try {
-            List<QASession> sessions = paperQAService.getUserSessions(authentication.getName());
+            String username = authentication != null ? authentication.getName() : "anonymous";
+            List<QASession> sessions = paperQAService.getUserSessions(username);
             return ResponseEntity.ok(sessions);
 
         } catch (Exception e) {
-            log.error("Error getting user sessions for user {}: {}", authentication.getName(), e.getMessage(), e);
+            String logUsername = authentication != null ? authentication.getName() : "anonymous";
+            log.error("Error getting user sessions for user {}: {}", logUsername, e.getMessage(), e);
             return ResponseEntity.status(500).body(null);
         }
     }

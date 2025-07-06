@@ -3,7 +3,9 @@ package dev.project.scholar_ai.controller;
 import dev.project.scholar_ai.dto.agent.request.ExtractionRequest;
 import dev.project.scholar_ai.messaging.publisher.ExtractionRequestSender;
 import dev.project.scholar_ai.model.paper.metadata.Paper;
+import dev.project.scholar_ai.model.paper.structure.StructuredFacts;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
+import dev.project.scholar_ai.repository.paper.structure.StructuredFactsRepository;
 import dev.project.scholar_ai.service.extraction.ExtractionService;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class PaperController {
 
     private final PaperRepository paperRepository;
+    private final StructuredFactsRepository structuredFactsRepository;
     private final ExtractionRequestSender extractionRequestSender;
     private final ExtractionService extractionService;
 
@@ -35,7 +38,7 @@ public class PaperController {
     public ResponseEntity<Page<Paper>> getAllPapers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "publicationDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
         Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -197,7 +200,7 @@ public class PaperController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("publicationDate").descending());
         Page<Paper> papers = paperRepository.findByTitleContainingIgnoreCaseOrAbstractTextContainingIgnoreCase(
                 query, query, pageable);
 
@@ -213,10 +216,120 @@ public class PaperController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("publicationDate").descending());
         Page<Paper> papers = paperRepository.findByExtractionStatus(
                 dev.project.scholar_ai.enums.ExtractionStatus.valueOf(status.toUpperCase()), pageable);
 
         return ResponseEntity.ok(papers);
+    }
+
+    /**
+     * Get structured facts for a paper
+     */
+    @GetMapping("/{paperId}/structured-facts")
+    public ResponseEntity<Map<String, Object>> getStructuredFacts(@PathVariable UUID paperId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check if paper exists
+            Paper paper = paperRepository
+                    .findById(paperId)
+                    .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + paperId));
+
+            // Get structured facts
+            StructuredFacts structuredFacts = structuredFactsRepository
+                    .findByPaperId(paperId)
+                    .orElse(null);
+
+            response.put("success", true);
+            response.put("paperId", paperId);
+            response.put("hasStructuredFacts", structuredFacts != null);
+            
+            if (structuredFacts != null) {
+                // Create a clean response object without circular references
+                Map<String, Object> factsResponse = new HashMap<>();
+                factsResponse.put("id", structuredFacts.getId());
+                factsResponse.put("paperId", paperId);
+                factsResponse.put("facts", structuredFacts.getFacts());
+                factsResponse.put("createdAt", structuredFacts.getCreatedAt());
+                factsResponse.put("updatedAt", structuredFacts.getUpdatedAt());
+                
+                response.put("structuredFacts", factsResponse);
+                response.put("structuredAt", structuredFacts.getCreatedAt());
+            } else {
+                response.put("message", "No structured facts found for this paper");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Failed to get structured facts for paper {}: {}", paperId, e.getMessage());
+
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Check if paper has structured data
+     */
+    @GetMapping("/{paperId}/has-structured-data")
+    public ResponseEntity<Map<String, Object>> hasStructuredData(@PathVariable UUID paperId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean hasStructuredFacts = structuredFactsRepository.existsByPaperId(paperId);
+
+            response.put("success", true);
+            response.put("paperId", paperId);
+            response.put("hasStructuredFacts", hasStructuredFacts);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Failed to check structured data for paper {}: {}", paperId, e.getMessage());
+
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Manual trigger for structuring (for testing)
+     */
+    @PostMapping("/{paperId}/trigger-structuring")
+    public ResponseEntity<Map<String, Object>> triggerStructuring(@PathVariable UUID paperId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Paper paper = paperRepository
+                    .findById(paperId)
+                    .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + paperId));
+
+            if (paper.getExtractedText() == null || paper.getExtractedText().trim().isEmpty()) {
+                response.put("success", false);
+                response.put("error", "Paper has no extracted text. Run extraction first.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Manually trigger structuring
+            extractionService.triggerStructuring(paperId, paper.getExtractedText());
+
+            response.put("success", true);
+            response.put("message", "Structuring triggered manually");
+            response.put("paperId", paperId);
+            response.put("textLength", paper.getExtractedText().length());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Failed to trigger structuring for paper {}: {}", paperId, e.getMessage());
+
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 }

@@ -1,6 +1,9 @@
 package dev.project.scholar_ai.model.paper.metadata;
 
 import dev.project.scholar_ai.enums.ExtractionStatus;
+import dev.project.scholar_ai.model.paper.structure.ExtractedDocument;
+import dev.project.scholar_ai.model.paper.structure.HumanSummary;
+import dev.project.scholar_ai.model.paper.structure.StructuredFacts;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -98,6 +101,16 @@ public class Paper {
     @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaperMetrics metrics;
 
+    // Structured Data Relationships
+    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ExtractedDocument extractedDocument;
+
+    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private HumanSummary humanSummary;
+
+    @OneToOne(mappedBy = "paper", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private StructuredFacts structuredFacts;
+
     // Helper methods
     public void addAuthor(Author author) {
         authors.add(author);
@@ -117,5 +130,44 @@ public class Paper {
     public void removeExternalId(ExternalId externalId) {
         externalIds.remove(externalId);
         externalId.setPaper(null);
+    }
+
+    // Structured Data Helper Methods
+    public void setExtractedDocument(ExtractedDocument extractedDocument) {
+        this.extractedDocument = extractedDocument;
+        if (extractedDocument != null && extractedDocument.getPaper() != this) {
+            extractedDocument.setPaper(this);
+        }
+    }
+
+    public void setHumanSummary(HumanSummary humanSummary) {
+        this.humanSummary = humanSummary;
+        if (humanSummary != null && humanSummary.getPaper() != this) {
+            humanSummary.setPaper(this);
+        }
+    }
+
+    public void setStructuredFacts(StructuredFacts structuredFacts) {
+        this.structuredFacts = structuredFacts;
+        if (structuredFacts != null && structuredFacts.getPaper() != this) {
+            structuredFacts.setPaper(this);
+        }
+    }
+
+    // Status check methods
+    public boolean hasExtractedDocument() {
+        return extractedDocument != null;
+    }
+
+    public boolean hasHumanSummary() {
+        return humanSummary != null;
+    }
+
+    public boolean hasStructuredFacts() {
+        return structuredFacts != null;
+    }
+
+    public boolean isFullyStructured() {
+        return hasExtractedDocument() && hasHumanSummary() && hasStructuredFacts();
     }
 }

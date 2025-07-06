@@ -58,9 +58,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                // Extraction and QA endpoints for testing
+                                // Paper-related endpoints (includes extraction, QA, structuring)
                                 "/api/papers/**",
-                                "/api/test/extraction/**")
+                                "/api/test/extraction/**",
+                                // QA and structuring endpoints
+                                "/api/v1/qa/**",
+                                "/api/v1/structuring/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
