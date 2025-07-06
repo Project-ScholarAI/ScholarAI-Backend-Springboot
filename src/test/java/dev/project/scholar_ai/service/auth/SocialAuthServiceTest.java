@@ -9,7 +9,8 @@ import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.GitHubEmailDTO;
 import dev.project.scholar_ai.dto.auth.GitHubUserDTO;
 import dev.project.scholar_ai.model.core.auth.SocialUser;
-import dev.project.scholar_ai.model.core.auth.UserProvider;
+import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
+import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.core.auth.SocialUserRepository;
 import dev.project.scholar_ai.repository.core.auth.UserProviderRepository;
 import dev.project.scholar_ai.security.GoogleVerifierUtil;
@@ -50,6 +51,12 @@ class SocialAuthServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private AuthUserRepository authUserRepository;
+
+    @Mock
+    private UserAccountRepository userAccountRepository;
+
     @InjectMocks
     private SocialAuthService socialAuthService;
 
@@ -77,16 +84,15 @@ class SocialAuthServiceTest {
         when(payload.get("name")).thenReturn(TEST_NAME);
         when(googleVerifierUtil.verify(anyString())).thenReturn(payload);
 
+        when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+        when(userAccountRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
         when(socialUserRepository.save(any(SocialUser.class))).thenAnswer(invocation -> {
             SocialUser user = invocation.getArgument(0);
             user.setId(UUID.randomUUID());
             return user;
         });
-
-        when(userProviderRepository.findBySocialUserAndProvider(any(), eq("GOOGLE")))
-                .thenReturn(Optional.empty());
-        when(userProviderRepository.save(any(UserProvider.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(jwtUtils.generateAccessToken(TEST_EMAIL)).thenReturn(TEST_ACCESS_TOKEN);
         when(jwtUtils.generateRefreshToken(TEST_EMAIL)).thenReturn(TEST_REFRESH_TOKEN);
@@ -102,7 +108,7 @@ class SocialAuthServiceTest {
         assertEquals(List.of("USER"), response.getRoles());
 
         verify(socialUserRepository).save(any(SocialUser.class));
-        verify(userProviderRepository).save(any(UserProvider.class));
+        verify(userAccountRepository).save(any());
         verify(refreshTokenService).saveRefreshToken(TEST_EMAIL, TEST_REFRESH_TOKEN);
     }
 
@@ -120,17 +126,12 @@ class SocialAuthServiceTest {
         existingUser.setEmail(TEST_EMAIL);
         existingUser.setName(TEST_NAME);
         existingUser.setRole("USER");
+        existingUser.setProvider("GOOGLE");
 
+        when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(existingUser));
         when(socialUserRepository.save(any(SocialUser.class))).thenReturn(existingUser);
-
-        UserProvider existingProvider = new UserProvider();
-        existingProvider.setSocialUser(existingUser);
-        existingProvider.setProvider("GOOGLE");
-        existingProvider.setProviderId(TEST_PROVIDER_ID);
-
-        when(userProviderRepository.findBySocialUserAndProvider(any(), eq("GOOGLE")))
-                .thenReturn(Optional.of(existingProvider));
+        when(userAccountRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
 
         when(jwtUtils.generateAccessToken(TEST_EMAIL)).thenReturn(TEST_ACCESS_TOKEN);
         when(jwtUtils.generateRefreshToken(TEST_EMAIL)).thenReturn(TEST_REFRESH_TOKEN);
@@ -146,6 +147,7 @@ class SocialAuthServiceTest {
         assertEquals("Updated Name", existingUser.getName());
 
         verify(socialUserRepository).save(existingUser);
+        verify(userAccountRepository).save(any());
         verify(refreshTokenService).saveRefreshToken(TEST_EMAIL, TEST_REFRESH_TOKEN);
     }
 
@@ -178,16 +180,15 @@ class SocialAuthServiceTest {
                         eq("https://api.github.com/user"), eq(HttpMethod.GET), any(), eq(GitHubUserDTO.class)))
                 .thenReturn(userResponse);
 
+        when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+        when(userAccountRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
         when(socialUserRepository.save(any(SocialUser.class))).thenAnswer(invocation -> {
             SocialUser user = invocation.getArgument(0);
             user.setId(UUID.randomUUID());
             return user;
         });
-
-        when(userProviderRepository.findBySocialUserAndProvider(any(), eq("GITHUB")))
-                .thenReturn(Optional.empty());
-        when(userProviderRepository.save(any(UserProvider.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(jwtUtils.generateAccessToken(TEST_EMAIL)).thenReturn(TEST_ACCESS_TOKEN);
         when(jwtUtils.generateRefreshToken(TEST_EMAIL)).thenReturn(TEST_REFRESH_TOKEN);
@@ -203,7 +204,7 @@ class SocialAuthServiceTest {
         assertEquals(List.of("USER"), response.getRoles());
 
         verify(socialUserRepository).save(any(SocialUser.class));
-        verify(userProviderRepository).save(any(UserProvider.class));
+        verify(userAccountRepository).save(any());
         verify(refreshTokenService).saveRefreshToken(TEST_EMAIL, TEST_REFRESH_TOKEN);
     }
 
@@ -240,16 +241,15 @@ class SocialAuthServiceTest {
                         eq(GitHubEmailDTO[].class)))
                 .thenReturn(emailResponse);
 
+        when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+        when(userAccountRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
         when(socialUserRepository.save(any(SocialUser.class))).thenAnswer(invocation -> {
             SocialUser user = invocation.getArgument(0);
             user.setId(UUID.randomUUID());
             return user;
         });
-
-        when(userProviderRepository.findBySocialUserAndProvider(any(), eq("GITHUB")))
-                .thenReturn(Optional.empty());
-        when(userProviderRepository.save(any(UserProvider.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(jwtUtils.generateAccessToken(TEST_EMAIL)).thenReturn(TEST_ACCESS_TOKEN);
         when(jwtUtils.generateRefreshToken(TEST_EMAIL)).thenReturn(TEST_REFRESH_TOKEN);
