@@ -12,7 +12,9 @@ import static org.mockito.Mockito.when;
 
 import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
+import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
+import dev.project.scholar_ai.repository.core.auth.SocialUserRepository;
 import dev.project.scholar_ai.security.JwtUtils;
 import java.time.Duration;
 import java.util.Collections;
@@ -36,6 +38,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class AuthServiceTest {
     @Mock
     private AuthUserRepository authUserRepository;
+
+    @Mock
+    private SocialUserRepository socialUserRepository;
+
+    @Mock
+    private UserAccountRepository userAccountRepository;
 
     @Mock
     private UserLoadingService userLoadingService;
@@ -72,16 +80,26 @@ class AuthServiceTest {
     @Test
     void registerUser_Success() {
         when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+        when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn(TEST_ENCODED_PASSWORD);
+
+        AuthUser savedUser = new AuthUser();
+        savedUser.setId(TEST_USER_ID);
+        savedUser.setEmail(TEST_EMAIL);
+        savedUser.setEncryptedPassword(TEST_ENCODED_PASSWORD);
+        savedUser.setRole("USER");
+        when(authUserRepository.save(any(AuthUser.class))).thenReturn(savedUser);
 
         authService.registerUser(TEST_EMAIL, TEST_PASSWORD);
 
         ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
         verify(authUserRepository).save(userCaptor.capture());
-        AuthUser savedUser = userCaptor.getValue();
-        assertEquals(TEST_EMAIL, savedUser.getEmail());
-        assertEquals(TEST_ENCODED_PASSWORD, savedUser.getEncryptedPassword());
-        assertEquals("USER", savedUser.getRole());
+        AuthUser capturedUser = userCaptor.getValue();
+        assertEquals(TEST_EMAIL, capturedUser.getEmail());
+        assertEquals(TEST_ENCODED_PASSWORD, capturedUser.getEncryptedPassword());
+        assertEquals("USER", capturedUser.getRole());
+
+        verify(userAccountRepository).save(any());
     }
 
     @Test
@@ -107,6 +125,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(TEST_PASSWORD, TEST_ENCODED_PASSWORD)).thenReturn(true);
         when(jwtUtils.generateAccessToken(TEST_EMAIL)).thenReturn(TEST_ACCESS_TOKEN);
         when(jwtUtils.generateRefreshToken(TEST_EMAIL)).thenReturn(TEST_REFRESH_TOKEN);
+        when(socialUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         when(authUserRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(authUser));
 
         AuthResponse response = authService.loginUser(TEST_EMAIL, TEST_PASSWORD);
