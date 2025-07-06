@@ -37,17 +37,12 @@ class SecurityConfigTest {
 
     @Test
     void whenAccessSecuredEndpointWithoutUser_thenIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/papers/some_endpoint")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/todo/summary")).andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser
     void whenAccessSecuredEndpointWithUser_thenIsOk() throws Exception {
-        // This test assumes that /api/papers/some_endpoint exists and is secured.
-        // It might fail with 404 if the endpoint is not defined.
-        // For a more robust test, you would mock the service layer for the controller.
-        // However, for testing security configuration, checking for a non-401 status is often sufficient.
-        mockMvc.perform(get("/api/papers/some_endpoint"))
-                .andExpect(status().isNotFound()); // Or isOk() if endpoint exists
+        mockMvc.perform(get("/api/v1/todo/summary")).andExpect(status().isOk());
     }
 }
