@@ -194,7 +194,8 @@ public class TodoServiceImpl implements TodoService {
                 .count();
 
         // Debug: print all summary counts
-        System.out.println("[DEBUG] pending=" + pending + ", inProgress=" + inProgress + ", completed=" + completed + ", cancelled=" + cancelled);
+        System.out.println("[DEBUG] pending=" + pending + ", inProgress=" + inProgress + ", completed=" + completed
+                + ", cancelled=" + cancelled);
         System.out.println("[DEBUG] urgent=" + urgent + ", high=" + high + ", medium=" + medium + ", low=" + low);
 
         // Calculate overdue, due today, and due this week

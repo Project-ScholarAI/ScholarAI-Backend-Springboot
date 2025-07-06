@@ -52,10 +52,13 @@ public class TodoSummaryResDTO {
     public static class PriorityCount {
         @JsonProperty("urgent")
         private int urgent;
+
         @JsonProperty("high")
         private int high;
+
         @JsonProperty("medium")
         private int medium;
+
         @JsonProperty("low")
         private int low;
     }
