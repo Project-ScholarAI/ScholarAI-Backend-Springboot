@@ -20,7 +20,6 @@ public interface PaperMapper {
 
     PaperMapper INSTANCE = Mappers.getMapper(PaperMapper.class);
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "correlationId", ignore = true) // Will be set separately
     @Mapping(target = "authors", source = "authors", qualifiedByName = "mapAuthors")
     @Mapping(target = "externalIds", source = "externalIds", qualifiedByName = "mapExternalIds")
@@ -30,6 +29,7 @@ public interface PaperMapper {
     @Mapping(target = "fieldsOfStudy", source = "fieldsOfStudy", qualifiedByName = "listToString")
     Paper toEntity(PaperMetadataDto dto);
 
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "authors", source = "authors", qualifiedByName = "mapAuthorEntities")
     @Mapping(target = "externalIds", source = "externalIds", qualifiedByName = "mapExternalIdEntities")
     @Mapping(target = "venueName", source = "venue.venueName")
