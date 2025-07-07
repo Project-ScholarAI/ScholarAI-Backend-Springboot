@@ -20,7 +20,6 @@ public interface PaperMapper {
 
     PaperMapper INSTANCE = Mappers.getMapper(PaperMapper.class);
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "correlationId", ignore = true) // Will be set separately
     @Mapping(target = "authors", source = "authors", qualifiedByName = "mapAuthors")
     @Mapping(target = "externalIds", source = "externalIds", qualifiedByName = "mapExternalIds")
