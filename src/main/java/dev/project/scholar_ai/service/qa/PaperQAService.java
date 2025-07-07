@@ -33,7 +33,6 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 @Transactional
 public class PaperQAService {
-
     private final QASessionRepository qaSessionRepository;
     private final QAMessageRepository qaMessageRepository;
     private final PaperRepository paperRepository;
@@ -93,8 +92,8 @@ public class PaperQAService {
                 qaMessageRepository.save(userMessage);
 
                 // Get conversation history
-                recentMessages =
-                        qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
+                recentMessages = qaMessageRepository.findRecentMessagesBySessionId(session.getId(),
+                        PageRequest.of(0, 10));
             }
 
             // Call FastAPI QA service
@@ -181,7 +180,8 @@ public class PaperQAService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", paper.getTitle());
 
-        // Handle authors safely - convert to string representation to avoid lazy loading
+        // Handle authors safely - convert to string representation to avoid lazy
+        // loading
         try {
             if (paper.getAuthors() != null) {
                 metadata.put("authors", paper.getAuthors().toString());
@@ -223,6 +223,8 @@ public class PaperQAService {
         AuthUser user = authUserRepository
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
+
+        log.debug("Fetching QA session {} for user {}", sessionId, user.getId());
 
         qaSessionRepository
                 .findByIdAndUserId(sessionId, user.getId())
