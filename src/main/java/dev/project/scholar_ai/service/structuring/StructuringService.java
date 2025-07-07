@@ -1,5 +1,6 @@
 package dev.project.scholar_ai.service.structuring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.project.scholar_ai.dto.agent.request.StructuringRequest;
 import dev.project.scholar_ai.dto.agent.request.SummarizationRequest;
 import dev.project.scholar_ai.dto.agent.response.StructuringResult;
@@ -13,17 +14,14 @@ import dev.project.scholar_ai.repository.paper.PaperRepository;
 import dev.project.scholar_ai.repository.paper.structure.ExtractedDocumentRepository;
 import dev.project.scholar_ai.repository.paper.structure.HumanSummaryRepository;
 import dev.project.scholar_ai.repository.paper.structure.StructuredFactsRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -50,7 +48,8 @@ public class StructuringService {
             log.info("Triggering text structuring for paper: {}", paperId);
 
             // Get paper metadata
-            Paper paper = paperRepository.findById(paperId)
+            Paper paper = paperRepository
+                    .findById(paperId)
                     .orElseThrow(() -> new RuntimeException("Paper not found: " + paperId));
 
             // Build paper metadata for AI processing
@@ -86,7 +85,8 @@ public class StructuringService {
         log.info("Updating paper {} with structured content", result.getPaperId());
 
         try {
-            Paper paper = paperRepository.findById(result.getPaperId())
+            Paper paper = paperRepository
+                    .findById(result.getPaperId())
                     .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + result.getPaperId()));
 
             if ("COMPLETED".equals(result.getStatus())) {
@@ -99,10 +99,13 @@ public class StructuringService {
                 // Save human summary
                 saveHumanSummary(paper, result);
 
-                log.info("Successfully saved structured content for paper {} - {} sections, {} facts fields",
-                        result.getPaperId(), 
+                log.info(
+                        "Successfully saved structured content for paper {} - {} sections, {} facts fields",
+                        result.getPaperId(),
                         result.getSectionsCount(),
-                        result.getStructuredFacts() != null ? result.getStructuredFacts().size() : 0);
+                        result.getStructuredFacts() != null
+                                ? result.getStructuredFacts().size()
+                                : 0);
 
                 // Trigger summarization with structured content
                 triggerSummarizationWithStructuredContent(result.getPaperId(), paper.getExtractedText());
@@ -145,17 +148,16 @@ public class StructuringService {
     private void saveExtractedDocument(Paper paper, StructuringResult result) {
         try {
             // Check if extracted document already exists
-            ExtractedDocument extractedDocument = extractedDocumentRepository.findByPaperId(paper.getId())
-                    .orElse(ExtractedDocument.builder()
-                            .paper(paper)
-                            .build());
+            ExtractedDocument extractedDocument = extractedDocumentRepository
+                    .findByPaperId(paper.getId())
+                    .orElse(ExtractedDocument.builder().paper(paper).build());
 
             extractedDocument.setFullText(paper.getExtractedText());
             extractedDocument.setSections(result.getSections());
 
             extractedDocumentRepository.save(extractedDocument);
-            log.debug("Saved extracted document with {} sections for paper {}", 
-                    result.getSectionsCount(), paper.getId());
+            log.debug(
+                    "Saved extracted document with {} sections for paper {}", result.getSectionsCount(), paper.getId());
 
         } catch (Exception e) {
             log.error("Failed to save extracted document for paper {}: {}", paper.getId(), e.getMessage(), e);
@@ -165,10 +167,9 @@ public class StructuringService {
     private void saveStructuredFacts(Paper paper, StructuringResult result) {
         try {
             // Check if structured facts already exist
-            StructuredFacts structuredFacts = structuredFactsRepository.findByPaperId(paper.getId())
-                    .orElse(StructuredFacts.builder()
-                            .paper(paper)
-                            .build());
+            StructuredFacts structuredFacts = structuredFactsRepository
+                    .findByPaperId(paper.getId())
+                    .orElse(StructuredFacts.builder().paper(paper).build());
 
             structuredFacts.setFacts(result.getStructuredFacts());
 
@@ -184,10 +185,9 @@ public class StructuringService {
     private void saveHumanSummary(Paper paper, StructuringResult result) {
         try {
             // Check if human summary already exists
-            HumanSummary humanSummary = humanSummaryRepository.findByPaperId(paper.getId())
-                    .orElse(HumanSummary.builder()
-                            .paper(paper)
-                            .build());
+            HumanSummary humanSummary = humanSummaryRepository
+                    .findByPaperId(paper.getId())
+                    .orElse(HumanSummary.builder().paper(paper).build());
 
             Map<String, Object> summaryData = result.getHumanSummary();
             if (summaryData != null) {
@@ -197,7 +197,8 @@ public class StructuringService {
                 humanSummary.setDataExperimentalSetup((String) summaryData.get("data_experimental_setup"));
                 humanSummary.setHeadlineResults((List<Map<String, Object>>) summaryData.get("headline_results"));
                 humanSummary.setLimitationsFailureModes((List<String>) summaryData.get("limitations_failure_modes"));
-                humanSummary.setPracticalImplicationsNextSteps((String) summaryData.get("practical_implications_next_steps"));
+                humanSummary.setPracticalImplicationsNextSteps(
+                        (String) summaryData.get("practical_implications_next_steps"));
             }
 
             humanSummaryRepository.save(humanSummary);
@@ -211,11 +212,14 @@ public class StructuringService {
     private Map<String, Object> buildPaperMetadata(Paper paper) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", paper.getTitle());
-        metadata.put("authors", paper.getAuthors() != null ? 
-                paper.getAuthors().stream()
-                        .map(author -> author.getName())
-                        .reduce((a, b) -> a + ", " + b)
-                        .orElse("Unknown") : "Unknown");
+        metadata.put(
+                "authors",
+                paper.getAuthors() != null
+                        ? paper.getAuthors().stream()
+                                .map(author -> author.getName())
+                                .reduce((a, b) -> a + ", " + b)
+                                .orElse("Unknown")
+                        : "Unknown");
         metadata.put("abstract", paper.getAbstractText());
         metadata.put("source", paper.getSource());
         metadata.put("publication_date", paper.getPublicationDate());

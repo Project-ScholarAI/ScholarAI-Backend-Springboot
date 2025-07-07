@@ -1,14 +1,13 @@
 package dev.project.scholar_ai.repository.paper.structure;
 
 import dev.project.scholar_ai.model.paper.structure.HumanSummary;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface HumanSummaryRepository extends JpaRepository<HumanSummary, UUID> {
@@ -39,7 +38,8 @@ public interface HumanSummaryRepository extends JpaRepository<HumanSummary, UUID
     /**
      * Find summaries by research area keyword
      */
-    @Query("SELECT hs FROM HumanSummary hs WHERE LOWER(hs.problemMotivation) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(hs.methodOverview) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query(
+            "SELECT hs FROM HumanSummary hs WHERE LOWER(hs.problemMotivation) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(hs.methodOverview) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<HumanSummary> findByKeyword(@Param("keyword") String keyword);
 
     /**
@@ -61,12 +61,14 @@ public interface HumanSummaryRepository extends JpaRepository<HumanSummary, UUID
     /**
      * Find summaries with minimum number of contributions
      */
-    @Query("SELECT hs FROM HumanSummary hs WHERE SIZE(hs.keyContributions) >= :minContributions ORDER BY hs.createdAt DESC")
+    @Query(
+            "SELECT hs FROM HumanSummary hs WHERE SIZE(hs.keyContributions) >= :minContributions ORDER BY hs.createdAt DESC")
     List<HumanSummary> findWithMinimumContributions(@Param("minContributions") int minContributions);
 
     /**
      * Find summaries that have both contributions and results
      */
-    @Query("SELECT hs FROM HumanSummary hs WHERE SIZE(hs.keyContributions) > 0 AND SIZE(hs.headlineResults) > 0 ORDER BY hs.createdAt DESC")
+    @Query(
+            "SELECT hs FROM HumanSummary hs WHERE SIZE(hs.keyContributions) > 0 AND SIZE(hs.headlineResults) > 0 ORDER BY hs.createdAt DESC")
     List<HumanSummary> findCompleteWithContributionsAndResults();
 }

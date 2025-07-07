@@ -1,14 +1,13 @@
 package dev.project.scholar_ai.repository.paper.structure;
 
 import dev.project.scholar_ai.model.paper.structure.ExtractedDocument;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface ExtractedDocumentRepository extends JpaRepository<ExtractedDocument, UUID> {

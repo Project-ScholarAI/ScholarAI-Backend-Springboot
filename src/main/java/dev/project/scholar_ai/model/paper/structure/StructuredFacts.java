@@ -1,7 +1,11 @@
 package dev.project.scholar_ai.model.paper.structure;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.project.scholar_ai.model.paper.metadata.Paper;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,11 +14,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
 
 @Entity
 @Table(name = "structured_facts")

@@ -78,7 +78,7 @@ public class PaperQAService {
             // Handle session and messages (skip for anonymous users)
             QASession session = null;
             List<QAMessage> recentMessages = new ArrayList<>();
-            
+
             if (!"anonymous".equals(userEmail)) {
                 // Get or create session for authenticated users
                 session = getOrCreateSession(request, user, paper);
@@ -93,7 +93,8 @@ public class PaperQAService {
                 qaMessageRepository.save(userMessage);
 
                 // Get conversation history
-                recentMessages = qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
+                recentMessages =
+                        qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
             }
 
             // Call FastAPI QA service
@@ -179,7 +180,7 @@ public class PaperQAService {
     private Map<String, Object> buildPaperMetadata(Paper paper) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", paper.getTitle());
-        
+
         // Handle authors safely - convert to string representation to avoid lazy loading
         try {
             if (paper.getAuthors() != null) {
@@ -191,7 +192,7 @@ public class PaperQAService {
             // Fallback if authors can't be accessed
             metadata.put("authors", "Unknown");
         }
-        
+
         metadata.put("abstract", paper.getAbstractText());
         metadata.put("source", paper.getSource());
         metadata.put("publication_date", paper.getPublicationDate());

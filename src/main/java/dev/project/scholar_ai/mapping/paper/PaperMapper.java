@@ -30,6 +30,7 @@ public interface PaperMapper {
     @Mapping(target = "fieldsOfStudy", source = "fieldsOfStudy", qualifiedByName = "listToString")
     Paper toEntity(PaperMetadataDto dto);
 
+    @Mapping(target = "id", expression = "java(entity.getId() != null ? entity.getId().toString() : null)")
     @Mapping(target = "authors", source = "authors", qualifiedByName = "mapAuthorEntities")
     @Mapping(target = "externalIds", source = "externalIds", qualifiedByName = "mapExternalIdEntities")
     @Mapping(target = "venueName", source = "venue.venueName")

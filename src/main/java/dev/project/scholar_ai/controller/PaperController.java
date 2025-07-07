@@ -200,7 +200,8 @@ public class PaperController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("publicationDate").descending());
+        Pageable pageable =
+                PageRequest.of(page, size, Sort.by("publicationDate").descending());
         Page<Paper> papers = paperRepository.findByTitleContainingIgnoreCaseOrAbstractTextContainingIgnoreCase(
                 query, query, pageable);
 
@@ -216,7 +217,8 @@ public class PaperController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("publicationDate").descending());
+        Pageable pageable =
+                PageRequest.of(page, size, Sort.by("publicationDate").descending());
         Page<Paper> papers = paperRepository.findByExtractionStatus(
                 dev.project.scholar_ai.enums.ExtractionStatus.valueOf(status.toUpperCase()), pageable);
 
@@ -237,14 +239,13 @@ public class PaperController {
                     .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + paperId));
 
             // Get structured facts
-            StructuredFacts structuredFacts = structuredFactsRepository
-                    .findByPaperId(paperId)
-                    .orElse(null);
+            StructuredFacts structuredFacts =
+                    structuredFactsRepository.findByPaperId(paperId).orElse(null);
 
             response.put("success", true);
             response.put("paperId", paperId);
             response.put("hasStructuredFacts", structuredFacts != null);
-            
+
             if (structuredFacts != null) {
                 // Create a clean response object without circular references
                 Map<String, Object> factsResponse = new HashMap<>();
@@ -253,7 +254,7 @@ public class PaperController {
                 factsResponse.put("facts", structuredFacts.getFacts());
                 factsResponse.put("createdAt", structuredFacts.getCreatedAt());
                 factsResponse.put("updatedAt", structuredFacts.getUpdatedAt());
-                
+
                 response.put("structuredFacts", factsResponse);
                 response.put("structuredAt", structuredFacts.getCreatedAt());
             } else {
@@ -308,7 +309,8 @@ public class PaperController {
                     .findById(paperId)
                     .orElseThrow(() -> new RuntimeException("Paper not found with ID: " + paperId));
 
-            if (paper.getExtractedText() == null || paper.getExtractedText().trim().isEmpty()) {
+            if (paper.getExtractedText() == null
+                    || paper.getExtractedText().trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "Paper has no extracted text. Run extraction first.");
                 return ResponseEntity.badRequest().body(response);

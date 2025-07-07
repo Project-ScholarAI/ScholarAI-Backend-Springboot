@@ -126,17 +126,16 @@ public class ExtractionService {
 
         // Remove null bytes (0x00) and other control characters except newlines and tabs
         String sanitized = text.replaceAll("[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]", "");
-        
+
         // Trim excessive whitespace
         sanitized = sanitized.replaceAll("\\s+", " ").trim();
-        
+
         // Limit text length if too long (optional safety measure)
         if (sanitized.length() > 1_000_000) { // 1MB limit
-            log.warn("Truncating very long extracted text from {} to {} characters", 
-                    sanitized.length(), 1_000_000);
+            log.warn("Truncating very long extracted text from {} to {} characters", sanitized.length(), 1_000_000);
             sanitized = sanitized.substring(0, 1_000_000) + "... [TRUNCATED]";
         }
-        
+
         return sanitized;
     }
 }
