@@ -17,20 +17,22 @@ public class StructuringRequestSender {
 
     public void send(StructuringRequest request) {
         try {
-            log.info("📤 Sending text structuring request for paper: {} with correlation ID: {}", 
-                    request.getPaperId(), request.getCorrelationId());
-            
+            log.info(
+                    "📤 Sending text structuring request for paper: {} with correlation ID: {}",
+                    request.getPaperId(),
+                    request.getCorrelationId());
+
             rabbitTemplate.convertAndSend(
-                rabbitMQConfig.getExchangeName(),
-                rabbitMQConfig.getStructuringRoutingKey(),
-                request
-            );
-            
+                    rabbitMQConfig.getExchangeName(), rabbitMQConfig.getStructuringRoutingKey(), request);
+
             log.info("✅ Text structuring request sent successfully for paper: {}", request.getPaperId());
-            
+
         } catch (Exception e) {
-            log.error("❌ Failed to send text structuring request for paper: {} - Error: {}", 
-                    request.getPaperId(), e.getMessage(), e);
+            log.error(
+                    "❌ Failed to send text structuring request for paper: {} - Error: {}",
+                    request.getPaperId(),
+                    e.getMessage(),
+                    e);
             throw new RuntimeException("Failed to send text structuring request", e);
         }
     }

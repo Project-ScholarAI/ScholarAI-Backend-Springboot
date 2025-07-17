@@ -5,13 +5,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Schema(description = "Comprehensive paper metadata with all required fields")
 public record PaperMetadataDto(
-        // Database ID
-        @Schema(description = "Unique database identifier for the paper") UUID id,
-        
+        @Schema(description = "Unique identifier for the paper", example = "b1a2c3d4-e5f6-7890-abcd-1234567890ef")
+                String id,
+
         // Core Fields (present for almost all papers)
         @Schema(description = "Paper title", example = "Deep Learning for Natural Language Processing") String title,
         @JsonProperty("abstract")

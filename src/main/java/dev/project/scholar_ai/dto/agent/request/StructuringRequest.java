@@ -3,13 +3,12 @@ package dev.project.scholar_ai.dto.agent.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Map;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -21,8 +20,7 @@ public class StructuringRequest {
     @JsonProperty("correlationId")
     private String correlationId;
 
-    @NotNull(message = "Paper ID is required")
-    @JsonProperty("paperId")
+    @NotNull(message = "Paper ID is required") @JsonProperty("paperId")
     private UUID paperId;
 
     @NotBlank(message = "Extracted text is required")

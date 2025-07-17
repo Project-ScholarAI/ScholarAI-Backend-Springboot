@@ -11,6 +11,7 @@ import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.paper.PaperRepository;
 import dev.project.scholar_ai.repository.qa.QAMessageRepository;
 import dev.project.scholar_ai.repository.qa.QASessionRepository;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,6 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 @Transactional
 public class PaperQAService {
-
     private final QASessionRepository qaSessionRepository;
     private final QAMessageRepository qaMessageRepository;
     private final PaperRepository paperRepository;
@@ -42,6 +42,18 @@ public class PaperQAService {
 
     @Value("${scholarai.fastapi.base-url:http://localhost:8000}")
     private String fastApiBaseUrl;
+
+    @PostConstruct
+    public void init() {
+        log.info("PaperQAService initialized with FastAPI base URL: {}", fastApiBaseUrl);
+    }
+
+    /**
+     * Get the FastAPI base URL for debugging purposes
+     */
+    public String getFastApiBaseUrl() {
+        return fastApiBaseUrl;
+    }
 
     /**
      * Chat with a paper using extracted text and structured content
@@ -78,7 +90,7 @@ public class PaperQAService {
             // Handle session and messages (skip for anonymous users)
             QASession session = null;
             List<QAMessage> recentMessages = new ArrayList<>();
-            
+
             if (!"anonymous".equals(userEmail)) {
                 // Get or create session for authenticated users
                 session = getOrCreateSession(request, user, paper);
@@ -93,7 +105,8 @@ public class PaperQAService {
                 qaMessageRepository.save(userMessage);
 
                 // Get conversation history
-                recentMessages = qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
+                recentMessages =
+                        qaMessageRepository.findRecentMessagesBySessionId(session.getId(), PageRequest.of(0, 10));
             }
 
             // Call FastAPI QA service
@@ -146,6 +159,9 @@ public class PaperQAService {
         try {
             String url = fastApiBaseUrl + "/api/v1/papers/" + paper.getId() + "/chat";
 
+            log.info("Calling FastAPI QA service at URL: {}", url);
+            log.info("FastAPI base URL from config: {}", fastApiBaseUrl);
+
             // Build request payload
             Map<String, Object> payload = new HashMap<>();
             payload.put("query", query);
@@ -158,18 +174,28 @@ public class PaperQAService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
+            log.info(
+                    "Sending request to FastAPI with payload size: {} characters",
+                    paper.getExtractedText() != null ? paper.getExtractedText().length() : 0);
+
             // Make API call
             Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
 
             if (response != null && response.containsKey("response")) {
+                log.info("FastAPI response received successfully");
                 return (String) response.get("response");
             } else {
+                log.warn("FastAPI response is null or missing 'response' field");
                 return "Sorry, I couldn't process your question at the moment.";
             }
 
         } catch (Exception e) {
-            log.error("Failed to call FastAPI QA service: {}", e.getMessage(), e);
-            return "Sorry, there was an error processing your question.";
+            log.error(
+                    "Failed to call FastAPI QA service at URL: {}. Error: {}",
+                    fastApiBaseUrl + "/api/v1/papers/" + paper.getId() + "/chat",
+                    e.getMessage(),
+                    e);
+            return "Sorry, there was an error processing your question. Please check if the FastAPI service is running.";
         }
     }
 
@@ -179,8 +205,9 @@ public class PaperQAService {
     private Map<String, Object> buildPaperMetadata(Paper paper) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", paper.getTitle());
-        
-        // Handle authors safely - convert to string representation to avoid lazy loading
+
+        // Handle authors safely - convert to string representation to avoid lazy
+        // loading
         try {
             if (paper.getAuthors() != null) {
                 metadata.put("authors", paper.getAuthors().toString());
@@ -191,7 +218,7 @@ public class PaperQAService {
             // Fallback if authors can't be accessed
             metadata.put("authors", "Unknown");
         }
-        
+
         metadata.put("abstract", paper.getAbstractText());
         metadata.put("source", paper.getSource());
         metadata.put("publication_date", paper.getPublicationDate());
@@ -222,6 +249,8 @@ public class PaperQAService {
         AuthUser user = authUserRepository
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
+
+        log.debug("Fetching QA session {} for user {}", sessionId, user.getId());
 
         qaSessionRepository
                 .findByIdAndUserId(sessionId, user.getId())

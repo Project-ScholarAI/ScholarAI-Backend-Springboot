@@ -80,7 +80,6 @@ spring:
     from-email: ${SENDGRID_FROM_EMAIL}
     template-id: ${SENDGRID_TEMPLATE_ID}    
 
-
 server:
   port: 8080
   error:
@@ -138,7 +137,10 @@ resilience4j:
         limit-refresh-period: 1m
         timeout-duration: 0s
 
+# ScholarAI specific configurations
 scholarai:
+  fastapi:
+    base-url: ${FASTAPI_BASE_URL:http://docker-websearch-app-1:8000}
   rabbitmq:
     exchange: scholarai.exchange
     paper-fetch:
@@ -156,6 +158,11 @@ scholarai:
       routing-key: scholarai.extraction
       completed-queue: scholarai.extraction.completed.queue
       completed-routing-key: scholarai.extraction.completed
+    structuring:
+      queue: scholarai.structuring.queue
+      routing-key: scholarai.structuring
+      completed-queue: scholarai.structuring.completed.queue
+      completed-routing-key: scholarai.structuring.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization
@@ -169,3 +176,11 @@ scholarai:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://scholarAI.tech,https://*.vercel.app}
+
+logging:
+  level:
+    org.springframework.data.redis: INFO
+    io.lettuce.core: INFO
+    org.springframework.amqp: INFO
+    com.rabbitmq: INFO
+    dev.project.scholar_ai.messaging.listener: INFO

@@ -5,7 +5,10 @@ import dev.project.scholar_ai.dto.qa.ChatResponse;
 import dev.project.scholar_ai.model.qa.QAMessage;
 import dev.project.scholar_ai.model.qa.QASession;
 import dev.project.scholar_ai.service.qa.PaperQAService;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +91,11 @@ public class PaperQAController {
      * Health check endpoint for QA functionality
      */
     @GetMapping("/chat/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("QA service is running");
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "QA service is running");
+        response.put("timestamp", LocalDateTime.now());
+        response.put("fastApiBaseUrl", paperQAService.getFastApiBaseUrl());
+        return ResponseEntity.ok(response);
     }
 }
