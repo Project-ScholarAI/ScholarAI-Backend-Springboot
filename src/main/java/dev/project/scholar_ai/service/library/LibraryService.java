@@ -2,7 +2,10 @@ package dev.project.scholar_ai.service.library;
 
 import dev.project.scholar_ai.dto.library.LibraryResponseDto;
 import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
+import dev.project.scholar_ai.model.core.project.Project;
 import dev.project.scholar_ai.model.core.websearch.WebSearchOperation;
+import dev.project.scholar_ai.repository.core.project.ProjectCollaboratorRepository;
+import dev.project.scholar_ai.repository.core.project.ProjectRepository;
 import dev.project.scholar_ai.repository.core.websearch.WebSearchOperationRepository;
 import dev.project.scholar_ai.service.websearch.PaperPersistenceService;
 import java.time.LocalDateTime;
@@ -20,10 +23,15 @@ public class LibraryService {
 
     private final PaperPersistenceService paperPersistenceService;
     private final WebSearchOperationRepository webSearchOperationRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectCollaboratorRepository projectCollaboratorRepository;
 
     @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
-    public LibraryResponseDto getProjectLibrary(UUID projectId) {
-        log.info("Retrieving library for project: {}", projectId);
+    public LibraryResponseDto getProjectLibrary(UUID projectId, UUID userId) {
+        log.info("Retrieving library for project: {} by user: {}", projectId, userId);
+
+        // Validate project access
+        validateProjectAccess(projectId, userId);
 
         // Get all web search operations for this project
         List<WebSearchOperation> searchOperations =
@@ -90,6 +98,25 @@ public class LibraryService {
             return String.format(
                     "Project library contains %d papers from %d completed operations (%d operations still in progress)",
                     totalPapers, completedOperations, totalOperations - completedOperations);
+        }
+    }
+
+    /**
+     * Validate that the user has access to the project (owner or collaborator)
+     */
+    private void validateProjectAccess(UUID projectId, UUID userId) {
+        // First try to find as owner
+        Project project = projectRepository.findByIdAndUserId(projectId, userId).orElse(null);
+
+        // If not found as owner, check if user is a collaborator
+        if (project == null) {
+            boolean isCollaborator = projectCollaboratorRepository
+                    .findByProjectIdAndCollaboratorId(projectId, userId)
+                    .isPresent();
+
+            if (!isCollaborator) {
+                throw new RuntimeException("Project not found or access denied");
+            }
         }
     }
 }

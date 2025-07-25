@@ -1,0 +1,315 @@
+{
+    "info": {
+        "_postman_id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "ScholarAI Notes API",
+        "description": "Collection for testing the Notes API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Get All Notes",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes"
+                    ]
+                },
+                "description": "Retrieve all notes for a project"
+            },
+            "response": []
+        },
+        {
+            "name": "Create Note",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"title\": \"Research Ideas\",\n  \"content\": \"# Research Ideas\\n\\n## Key Concepts\\n- **Machine Learning** approaches\\n- Neural network architectures\\n- Data preprocessing techniques\\n\\n## Next Steps\\n1. Review literature\\n2. Design experiments\\n3. Implement prototypes\",\n  \"tags\": [\"ideas\", \"planning\", \"ml\"]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes"
+                    ]
+                },
+                "description": "Create a new note for a project"
+            },
+            "response": []
+        },
+        {
+            "name": "Update Note",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"title\": \"Updated Research Ideas\",\n  \"content\": \"# Updated Research Ideas\\n\\n## Key Concepts\\n- **Machine Learning** approaches\\n- Neural network architectures\\n- Data preprocessing techniques\\n- **New**: Transfer learning methods\\n\\n## Next Steps\\n1. Review literature\\n2. Design experiments\\n3. Implement prototypes\\n4. **New**: Evaluate transfer learning\",\n  \"tags\": [\"ideas\", \"planning\", \"ml\", \"transfer-learning\"]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/{{note_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "{{note_id}}"
+                    ]
+                },
+                "description": "Update an existing note"
+            },
+            "response": []
+        },
+        {
+            "name": "Delete Note",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/{{note_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "{{note_id}}"
+                    ]
+                },
+                "description": "Delete a note"
+            },
+            "response": []
+        },
+        {
+            "name": "Toggle Note Favorite",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/{{note_id}}/favorite",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "{{note_id}}",
+                        "favorite"
+                    ]
+                },
+                "description": "Toggle the favorite status of a note"
+            },
+            "response": []
+        },
+        {
+            "name": "Get Favorite Notes",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/favorites",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "favorites"
+                    ]
+                },
+                "description": "Get all favorite notes for a project"
+            },
+            "response": []
+        },
+        {
+            "name": "Search Notes by Tag",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/search/tag?tag=ml",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "search",
+                        "tag"
+                    ],
+                    "query": [
+                        {
+                            "key": "tag",
+                            "value": "ml"
+                        }
+                    ]
+                },
+                "description": "Search notes by tag"
+            },
+            "response": []
+        },
+        {
+            "name": "Search Notes by Content",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/notes/search/content?q=machine learning",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "notes",
+                        "search",
+                        "content"
+                    ],
+                    "query": [
+                        {
+                            "key": "q",
+                            "value": "machine learning"
+                        }
+                    ]
+                },
+                "description": "Search notes by content"
+            },
+            "response": []
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        },
+        {
+            "key": "project_id",
+            "value": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+        },
+        {
+            "key": "note_id",
+            "value": "550e8400-e29b-41d4-a716-446655440001",
+            "type": "string"
+        }
+    ]
+}

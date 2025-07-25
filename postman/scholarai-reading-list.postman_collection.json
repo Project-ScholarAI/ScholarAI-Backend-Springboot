@@ -1,0 +1,462 @@
+{
+    "info": {
+        "name": "ScholarAI Reading List API",
+        "description": "Comprehensive collection for testing the Reading List API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        },
+        {
+            "key": "project_id",
+            "value": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+        },
+        {
+            "key": "item_id",
+            "value": "550e8400-e29b-41d4-a716-446655440001",
+            "type": "string"
+        },
+        {
+            "key": "paper_id",
+            "value": "550e8400-e29b-41d4-a716-446655440002",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Get Reading List",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list?status=in-progress&priority=high&page=1&limit=20&sortBy=addedAt&sortOrder=desc",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list"
+                    ],
+                    "query": [
+                        {
+                            "key": "status",
+                            "value": "in-progress",
+                            "description": "Filter by status"
+                        },
+                        {
+                            "key": "priority",
+                            "value": "high",
+                            "description": "Filter by priority"
+                        },
+                        {
+                            "key": "page",
+                            "value": "1",
+                            "description": "Page number"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "20",
+                            "description": "Items per page"
+                        },
+                        {
+                            "key": "sortBy",
+                            "value": "addedAt",
+                            "description": "Sort field"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "desc",
+                            "description": "Sort direction"
+                        }
+                    ]
+                },
+                "description": "Retrieve all reading list items for a project with optional filtering and pagination"
+            }
+        },
+        {
+            "name": "Add Reading List Item",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"paperId\": \"{{paper_id}}\",\n  \"priority\": \"high\",\n  \"estimatedTime\": 45,\n  \"notes\": \"Important paper for understanding transformer architecture\",\n  \"tags\": [\"transformer\", \"attention\", \"nlp\"],\n  \"difficulty\": \"hard\",\n  \"relevance\": \"high\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list"
+                    ]
+                },
+                "description": "Add a new paper to the reading list with optional metadata"
+            }
+        },
+        {
+            "name": "Update Reading List Item",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"status\": \"in-progress\",\n  \"priority\": \"critical\",\n  \"estimatedTime\": 60,\n  \"actualTime\": 30,\n  \"notes\": \"Updated notes with additional insights\",\n  \"tags\": [\"transformer\", \"attention\", \"nlp\", \"deep-learning\"],\n  \"rating\": 4,\n  \"difficulty\": \"expert\",\n  \"relevance\": \"critical\",\n  \"readingProgress\": 75,\n  \"isBookmarked\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}"
+                    ]
+                },
+                "description": "Update an existing reading list item with new data"
+            }
+        },
+        {
+            "name": "Update Status",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"status\": \"completed\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}/status",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}",
+                        "status"
+                    ]
+                },
+                "description": "Update only the status of a reading list item with automatic timestamp management"
+            }
+        },
+        {
+            "name": "Update Progress",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"readingProgress\": 75\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}/progress",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}",
+                        "progress"
+                    ]
+                },
+                "description": "Update the reading progress percentage with automatic status management"
+            }
+        },
+        {
+            "name": "Delete Reading List Item",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}"
+                    ]
+                },
+                "description": "Remove a paper from the reading list"
+            }
+        },
+        {
+            "name": "Get Reading List Stats",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/stats?timeRange=30d",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "stats"
+                    ],
+                    "query": [
+                        {
+                            "key": "timeRange",
+                            "value": "30d",
+                            "description": "Time range for stats"
+                        }
+                    ]
+                },
+                "description": "Get comprehensive statistics about the reading list"
+            }
+        },
+        {
+            "name": "Get Recommendations",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/recommendations?limit=10&difficulty=medium&excludeRead=true",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "recommendations"
+                    ],
+                    "query": [
+                        {
+                            "key": "limit",
+                            "value": "10",
+                            "description": "Number of recommendations"
+                        },
+                        {
+                            "key": "difficulty",
+                            "value": "medium",
+                            "description": "Preferred difficulty level"
+                        },
+                        {
+                            "key": "excludeRead",
+                            "value": "true",
+                            "description": "Exclude already read papers"
+                        }
+                    ]
+                },
+                "description": "Get AI-powered paper recommendations based on reading history and project context"
+            }
+        },
+        {
+            "name": "Update Notes",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"note\": \"Key insight: The attention mechanism allows the model to focus on different parts of the input sequence dynamically. This is crucial for understanding how transformers work.\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}/notes",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}",
+                        "notes"
+                    ]
+                },
+                "description": "Add or update notes for a reading list item"
+            }
+        },
+        {
+            "name": "Rate Item",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"rating\": 4\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}/rating",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}",
+                        "rating"
+                    ]
+                },
+                "description": "Rate a completed reading list item (1-5 stars)"
+            }
+        },
+        {
+            "name": "Toggle Bookmark",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/projects/{{project_id}}/reading-list/{{item_id}}/bookmark",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects",
+                        "{{project_id}}",
+                        "reading-list",
+                        "{{item_id}}",
+                        "bookmark"
+                    ]
+                },
+                "description": "Toggle the bookmark status of a reading list item"
+            }
+        }
+    ]
+}
