@@ -5,6 +5,8 @@ import dev.project.scholar_ai.dto.project.AddCollaboratorRequest;
 import dev.project.scholar_ai.dto.project.CollaboratorDto;
 import dev.project.scholar_ai.dto.project.CreateProjectDto;
 import dev.project.scholar_ai.dto.project.ProjectDto;
+import dev.project.scholar_ai.dto.project.RemoveCollaboratorRequest;
+import dev.project.scholar_ai.dto.project.UpdateCollaboratorRequest;
 import dev.project.scholar_ai.dto.project.UpdateProjectDto;
 import dev.project.scholar_ai.model.core.auth.AuthUser;
 import dev.project.scholar_ai.model.core.project.Project;
@@ -405,9 +407,9 @@ public class ProjectController {
     /**
      * Remove a collaborator from a project
      */
-    @DeleteMapping("/{projectId}/collaborators/{collaboratorId}")
+    @DeleteMapping("/{projectId}/collaborators")
     public ResponseEntity<APIResponse<String>> removeCollaborator(
-            @PathVariable UUID projectId, @PathVariable UUID collaboratorId, Principal principal) {
+            @PathVariable UUID projectId, @Valid @RequestBody RemoveCollaboratorRequest request, Principal principal) {
         try {
             if (principal == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -416,28 +418,76 @@ public class ProjectController {
 
             log.info(
                     "Remove collaborator {} from project {} endpoint hit by user: {}",
-                    collaboratorId,
+                    request.collaboratorEmail(),
                     projectId,
                     principal.getName());
 
             UUID userId = getUserIdFromPrincipal(principal);
-            projectService.removeCollaborator(projectId, collaboratorId, userId);
+            projectService.removeCollaborator(projectId, request, userId);
 
             return ResponseEntity.ok(
                     APIResponse.success(HttpStatus.OK.value(), "Collaborator removed successfully", null));
         } catch (RuntimeException e) {
-            log.error("Error removing collaborator {} from project {}: {}", collaboratorId, projectId, e.getMessage());
+            log.error(
+                    "Error removing collaborator {} from project {}: {}",
+                    request.collaboratorEmail(),
+                    projectId,
+                    e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
         } catch (Exception e) {
             log.error(
                     "Unexpected error removing collaborator {} from project {}: {}",
-                    collaboratorId,
+                    request.collaboratorEmail(),
                     projectId,
                     e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(APIResponse.error(
                             HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to remove collaborator", null));
+        }
+    }
+
+    /**
+     * Update a collaborator's role in a project
+     */
+    @PutMapping("/{projectId}/collaborators")
+    public ResponseEntity<APIResponse<CollaboratorDto>> updateCollaborator(
+            @PathVariable UUID projectId, @Valid @RequestBody UpdateCollaboratorRequest request, Principal principal) {
+        try {
+            if (principal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Authentication required", null));
+            }
+
+            log.info(
+                    "Update collaborator {} role to {} in project {} endpoint hit by user: {}",
+                    request.collaboratorEmail(),
+                    request.role(),
+                    projectId,
+                    principal.getName());
+
+            UUID userId = getUserIdFromPrincipal(principal);
+            CollaboratorDto updatedCollaborator = projectService.updateCollaborator(projectId, request, userId);
+
+            return ResponseEntity.ok(APIResponse.success(
+                    HttpStatus.OK.value(), "Collaborator role updated successfully", updatedCollaborator));
+        } catch (RuntimeException e) {
+            log.error(
+                    "Error updating collaborator {} role in project {}: {}",
+                    request.collaboratorEmail(),
+                    projectId,
+                    e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+        } catch (Exception e) {
+            log.error(
+                    "Unexpected error updating collaborator {} role in project {}: {}",
+                    request.collaboratorEmail(),
+                    projectId,
+                    e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to update collaborator role", null));
         }
     }
 }

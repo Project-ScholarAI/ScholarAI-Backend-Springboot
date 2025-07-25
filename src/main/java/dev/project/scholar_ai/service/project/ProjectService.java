@@ -4,6 +4,8 @@ import dev.project.scholar_ai.dto.project.AddCollaboratorRequest;
 import dev.project.scholar_ai.dto.project.CollaboratorDto;
 import dev.project.scholar_ai.dto.project.CreateProjectDto;
 import dev.project.scholar_ai.dto.project.ProjectDto;
+import dev.project.scholar_ai.dto.project.RemoveCollaboratorRequest;
+import dev.project.scholar_ai.dto.project.UpdateCollaboratorRequest;
 import dev.project.scholar_ai.dto.project.UpdateProjectDto;
 import dev.project.scholar_ai.mapping.project.ProjectMapper;
 import dev.project.scholar_ai.model.core.account.UserAccount;
@@ -288,18 +290,14 @@ public class ProjectService {
                     UserAccount userAccount = userAccountRepository
                             .findById(collaborator.getCollaboratorId())
                             .orElse(null);
-                    String email = "";
-                    String name = "";
-                    if (userAccount != null) {
-                        email = userAccount.getEmail();
-                        name = userAccount.getFullName();
-                    }
+                    String name = userAccount != null ? userAccount.getFullName() : "";
                     return new CollaboratorDto(
                             collaborator.getId(),
                             collaborator.getProjectId(),
                             collaborator.getCollaboratorId(),
-                            email,
+                            collaborator.getCollaboratorEmail(),
                             name,
+                            collaborator.getOwnerEmail(),
                             collaborator.getRole().name(),
                             collaborator.getCreatedAt());
                 })
@@ -327,10 +325,16 @@ public class ProjectService {
             throw new RuntimeException("Collaborator already exists for this project");
         }
 
+        // Get owner email
+        AuthUser ownerUser =
+                authUserRepository.findById(ownerId).orElseThrow(() -> new RuntimeException("Owner not found"));
+
         // Create collaboration
         ProjectCollaborator collaboration = new ProjectCollaborator();
         collaboration.setProjectId(projectId);
         collaboration.setCollaboratorId(collaboratorUser.getId());
+        collaboration.setCollaboratorEmail(collaboratorUser.getEmail());
+        collaboration.setOwnerEmail(ownerUser.getEmail());
         collaboration.setRole(
                 ProjectCollaborator.CollaborationRole.valueOf(request.role().toUpperCase()));
 
@@ -347,8 +351,9 @@ public class ProjectService {
                 savedCollaboration.getId(),
                 savedCollaboration.getProjectId(),
                 savedCollaboration.getCollaboratorId(),
-                email,
+                savedCollaboration.getCollaboratorEmail(),
                 name,
+                savedCollaboration.getOwnerEmail(),
                 savedCollaboration.getRole().name(),
                 savedCollaboration.getCreatedAt());
     }
@@ -356,17 +361,80 @@ public class ProjectService {
     /**
      * Remove a collaborator from a project
      */
-    public void removeCollaborator(UUID projectId, UUID collaboratorId, UUID ownerId) {
-        log.info("Removing collaborator {} from project {} by owner {}", collaboratorId, projectId, ownerId);
+    public void removeCollaborator(UUID projectId, RemoveCollaboratorRequest request, UUID ownerId) {
+        log.info(
+                "Removing collaborator {} from project {} by owner {}",
+                request.collaboratorEmail(),
+                projectId,
+                ownerId);
 
         // Verify project ownership
         projectRepository
                 .findByIdAndUserId(projectId, ownerId)
                 .orElseThrow(() -> new RuntimeException("Project not found or access denied"));
 
+        // Find collaborator by email
+        AuthUser collaboratorUser = authUserRepository
+                .findByEmail(request.collaboratorEmail())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + request.collaboratorEmail()));
+
         // Remove collaboration
-        projectCollaboratorRepository.deleteByProjectIdAndCollaboratorId(projectId, collaboratorId);
+        projectCollaboratorRepository.deleteByProjectIdAndCollaboratorId(projectId, collaboratorUser.getId());
 
         log.info("Collaborator removed successfully from project: {}", projectId);
+    }
+
+    /**
+     * Update a collaborator's role in a project
+     */
+    public CollaboratorDto updateCollaborator(UUID projectId, UpdateCollaboratorRequest request, UUID ownerId) {
+        log.info(
+                "Updating collaborator {} role to {} in project {} by owner {}",
+                request.collaboratorEmail(),
+                request.role(),
+                projectId,
+                ownerId);
+
+        // Verify project ownership
+        projectRepository
+                .findByIdAndUserId(projectId, ownerId)
+                .orElseThrow(() -> new RuntimeException("Project not found or access denied"));
+
+        // Find collaborator by email
+        AuthUser collaboratorUser = authUserRepository
+                .findByEmail(request.collaboratorEmail())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + request.collaboratorEmail()));
+
+        // Find existing collaboration
+        ProjectCollaborator collaboration = projectCollaboratorRepository
+                .findByProjectIdAndCollaboratorId(projectId, collaboratorUser.getId())
+                .orElseThrow(() -> new RuntimeException("Collaborator not found for this project"));
+
+        // Update role
+        try {
+            ProjectCollaborator.CollaborationRole newRole =
+                    ProjectCollaborator.CollaborationRole.valueOf(request.role().toUpperCase());
+            collaboration.setRole(newRole);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid collaboration role: " + request.role());
+        }
+
+        ProjectCollaborator savedCollaboration = projectCollaboratorRepository.save(collaboration);
+
+        // Get user account details
+        UserAccount userAccount =
+                userAccountRepository.findById(collaboratorUser.getId()).orElse(null);
+        String name = userAccount != null ? userAccount.getFullName() : "";
+
+        log.info("Collaborator role updated successfully in project: {}", projectId);
+        return new CollaboratorDto(
+                savedCollaboration.getId(),
+                savedCollaboration.getProjectId(),
+                savedCollaboration.getCollaboratorId(),
+                savedCollaboration.getCollaboratorEmail(),
+                name,
+                savedCollaboration.getOwnerEmail(),
+                savedCollaboration.getRole().name(),
+                savedCollaboration.getCreatedAt());
     }
 }

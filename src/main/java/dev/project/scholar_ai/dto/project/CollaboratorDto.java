@@ -9,5 +9,6 @@ public record CollaboratorDto(
         UUID collaboratorId,
         String collaboratorEmail,
         String collaboratorName,
+        String ownerEmail,
         String role,
         Instant createdAt) {}

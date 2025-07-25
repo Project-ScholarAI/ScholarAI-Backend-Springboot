@@ -24,6 +24,12 @@ public class ProjectCollaborator {
     @Column(name = "collaborator_id", nullable = false, columnDefinition = "uuid")
     private UUID collaboratorId;
 
+    @Column(name = "collaborator_email", nullable = false, length = 255)
+    private String collaboratorEmail;
+
+    @Column(name = "owner_email", nullable = false, length = 255)
+    private String ownerEmail;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CollaborationRole role = CollaborationRole.VIEWER;
