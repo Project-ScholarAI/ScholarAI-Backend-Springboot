@@ -25,7 +25,7 @@ spring:
 
     # ─ PAPER DB (nested under the same "datasource" key) ─
     paper:
-      url: jdbc:postgresql://localhost:55436/paperDB
+      url: jdbc:postgresql://localhost:5434/paperDB
       username: ${PAPER_DB_USER}
       password: ${PAPER_DB_PASSWORD}
       driver-class-name: org.postgresql.Driver
@@ -73,7 +73,6 @@ spring:
     api-key: ${SENDGRID_API_KEY}
     from-email: ${SENDGRID_FROM_EMAIL}
     template-id: ${SENDGRID_TEMPLATE_ID}
-
 
 server:
   port: 8080
@@ -132,7 +131,10 @@ resilience4j:
         limit-refresh-period: 1m
         timeout-duration: 0s
 
+# ScholarAI specific configurations
 scholarai:
+  fastapi:
+    base-url: http://localhost:8000
   rabbitmq:
     exchange: scholarai.exchange
     paper-fetch:
@@ -145,6 +147,16 @@ scholarai:
       routing-key: scholarai.websearch
       completed-queue: scholarai.websearch.completed.queue
       completed-routing-key: scholarai.websearch.completed
+    extraction:
+      queue: scholarai.extraction.queue
+      routing-key: scholarai.extraction
+      completed-queue: scholarai.extraction.completed.queue
+      completed-routing-key: scholarai.extraction.completed
+    structuring:
+      queue: scholarai.structuring.queue
+      routing-key: scholarai.structuring
+      completed-queue: scholarai.structuring.completed.queue
+      completed-routing-key: scholarai.structuring.completed
     summarization:
       queue: scholarai.summarization.queue
       routing-key: scholarai.summarization
@@ -163,3 +175,6 @@ logging:
   level:
     org.springframework.data.redis: DEBUG
     io.lettuce.core: DEBUG
+    org.springframework.amqp: DEBUG
+    com.rabbitmq: DEBUG
+    dev.project.scholar_ai.messaging.listener: DEBUG

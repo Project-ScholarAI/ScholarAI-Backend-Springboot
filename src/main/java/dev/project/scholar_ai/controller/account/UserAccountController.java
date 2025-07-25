@@ -8,15 +8,14 @@ import dev.project.scholar_ai.service.account.UserAccountService;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 
 @RestController
 @RequestMapping("/api/v1/account")
@@ -24,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserAccountController {
     private static final Logger logger = LoggerFactory.getLogger(UserAccountController.class);
     private final UserAccountService userAccountService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -50,13 +50,11 @@ public class UserAccountController {
             String email = principal.getName();
             logger.info("Update account endpoint hitted with email: {}", email);
             UserAccount userAccount = userAccountService.getAccountByEmail(email);
-            UserAccount updatedAccount =
-                    userAccountService.updateAccount(userAccount.getId(), userAccountDTO);
+            UserAccount updatedAccount = userAccountService.updateAccount(userAccount.getId(), userAccountDTO);
             logger.info("Updated user account details: {}", objectMapper.writeValueAsString(updatedAccount));
-                    
-        
-            return ResponseEntity.ok(APIResponse.success(
-                    HttpStatus.OK.value(), "Account updated successfully", updatedAccount));
+
+            return ResponseEntity.ok(
+                    APIResponse.success(HttpStatus.OK.value(), "Account updated successfully", updatedAccount));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));

@@ -71,6 +71,30 @@ public class RabbitMQConfig {
     @Value("${scholarai.rabbitmq.web-search.completed-routing-key}")
     private String webSearchCompletedRoutingKey;
 
+    @Value("${scholarai.rabbitmq.extraction.queue}")
+    private String extractionQueue;
+
+    @Value("${scholarai.rabbitmq.extraction.routing-key}")
+    private String extractionRoutingKey;
+
+    @Value("${scholarai.rabbitmq.extraction.completed-queue}")
+    private String extractionCompletedQueue;
+
+    @Value("${scholarai.rabbitmq.extraction.completed-routing-key}")
+    private String extractionCompletedRoutingKey;
+
+    @Value("${scholarai.rabbitmq.structuring.queue}")
+    private String structuringQueue;
+
+    @Value("${scholarai.rabbitmq.structuring.routing-key}")
+    private String structuringRoutingKey;
+
+    @Value("${scholarai.rabbitmq.structuring.completed-queue}")
+    private String structuringCompletedQueue;
+
+    @Value("${scholarai.rabbitmq.structuring.completed-routing-key}")
+    private String structuringCompletedRoutingKey;
+
     /**
      * Creates a durable topic exchange for the application.
      * Topic exchanges route messages based on wildcard matches between the routing
@@ -162,6 +186,46 @@ public class RabbitMQConfig {
     @Bean
     public Queue webSearchCompletedQueue() {
         return QueueBuilder.durable(webSearchCompletedQueue).build();
+    }
+
+    /**
+     * Creates a durable queue for text extraction tasks.
+     *
+     * @return The configured Queue for text extraction.
+     */
+    @Bean
+    public Queue extractionQueue() {
+        return QueueBuilder.durable(extractionQueue).build();
+    }
+
+    /**
+     * Creates a durable queue for completed text extraction tasks.
+     *
+     * @return The configured Queue for completed text extraction.
+     */
+    @Bean
+    public Queue extractionCompletedQueue() {
+        return QueueBuilder.durable(extractionCompletedQueue).build();
+    }
+
+    /**
+     * Creates a durable queue for text structuring tasks.
+     *
+     * @return The configured Queue for text structuring.
+     */
+    @Bean
+    public Queue structuringQueue() {
+        return QueueBuilder.durable(structuringQueue).build();
+    }
+
+    /**
+     * Creates a durable queue for completed text structuring tasks.
+     *
+     * @return The configured Queue for completed text structuring.
+     */
+    @Bean
+    public Queue structuringCompletedQueue() {
+        return QueueBuilder.durable(structuringCompletedQueue).build();
     }
 
     /**
@@ -267,6 +331,58 @@ public class RabbitMQConfig {
     @Bean
     public Binding bindWebSearchCompleted(Queue webSearchCompletedQueue, TopicExchange appExchange) {
         return BindingBuilder.bind(webSearchCompletedQueue).to(appExchange).with(webSearchCompletedRoutingKey);
+    }
+
+    /**
+     * Binds the extraction queue to the application exchange using its specific
+     * routing key.
+     *
+     * @param extractionQueue The queue for text extraction tasks.
+     * @param appExchange     The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindExtraction(Queue extractionQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(extractionQueue).to(appExchange).with(extractionRoutingKey);
+    }
+
+    /**
+     * Binds the extraction completed queue to the application exchange using its
+     * specific routing key.
+     *
+     * @param extractionCompletedQueue The queue for completed extraction tasks.
+     * @param appExchange              The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindExtractionCompleted(Queue extractionCompletedQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(extractionCompletedQueue).to(appExchange).with(extractionCompletedRoutingKey);
+    }
+
+    /**
+     * Binds the structuring queue to the application exchange using its specific
+     * routing key.
+     *
+     * @param structuringQueue The queue for text structuring tasks.
+     * @param appExchange      The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindStructuring(Queue structuringQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(structuringQueue).to(appExchange).with(structuringRoutingKey);
+    }
+
+    /**
+     * Binds the structuring completed queue to the application exchange using its
+     * specific routing key.
+     *
+     * @param structuringCompletedQueue The queue for completed structuring tasks.
+     * @param appExchange               The main application topic exchange.
+     * @return The Binding definition.
+     */
+    @Bean
+    public Binding bindStructuringCompleted(Queue structuringCompletedQueue, TopicExchange appExchange) {
+        return BindingBuilder.bind(structuringCompletedQueue).to(appExchange).with(structuringCompletedRoutingKey);
     }
 
     /**

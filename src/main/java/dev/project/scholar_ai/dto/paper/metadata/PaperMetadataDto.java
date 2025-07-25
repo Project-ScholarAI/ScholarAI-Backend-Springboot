@@ -1,5 +1,6 @@
 package dev.project.scholar_ai.dto.paper.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
@@ -7,9 +8,14 @@ import java.util.Map;
 
 @Schema(description = "Comprehensive paper metadata with all required fields")
 public record PaperMetadataDto(
+        @Schema(description = "Unique identifier for the paper", example = "b1a2c3d4-e5f6-7890-abcd-1234567890ef")
+                String id,
+
         // Core Fields (present for almost all papers)
         @Schema(description = "Paper title", example = "Deep Learning for Natural Language Processing") String title,
-        @Schema(description = "Paper abstract. Ensured by MetadataEnrichmentService") String abstractText,
+        @JsonProperty("abstract")
+                @Schema(name = "abstract", description = "Paper abstract. Ensured by MetadataEnrichmentService")
+                String abstractText,
         @Schema(description = "List of authors. Ensured by MetadataEnrichmentService") List<AuthorDto> authors,
         @Schema(description = "Publication date (YYYY-MM-DD format). Ensured by MetadataEnrichmentService")
                 LocalDate publicationDate,

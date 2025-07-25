@@ -52,4 +52,5 @@ public record ProjectDto(
         @Schema(description = "Last modification timestamp", example = "2024-01-20T14:45:00Z") Instant updatedAt,
         @Schema(description = "Human-readable last activity time", example = "2 hours ago") String lastActivity,
         @Schema(description = "Whether the project is starred by the user", example = "true")
-                @NotNull(message = "Starred status is required") Boolean isStarred) {}
+                @NotNull(message = "Starred status is required") Boolean isStarred,
+        @Schema(description = "List of project collaborators", example = "[]") List<CollaboratorDto> collaborators) {}

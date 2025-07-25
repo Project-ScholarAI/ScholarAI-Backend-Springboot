@@ -3,6 +3,8 @@ package dev.project.scholar_ai.controller.websearch;
 import dev.project.scholar_ai.dto.agent.request.WebSearchRequestDTO;
 import dev.project.scholar_ai.dto.agent.response.WebSearchResponseDto;
 import dev.project.scholar_ai.dto.common.APIResponse;
+import dev.project.scholar_ai.model.core.auth.AuthUser;
+import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.service.websearch.WebSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,8 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,6 +32,24 @@ import org.springframework.web.bind.annotation.*;
 public class WebSearchController {
 
     private final WebSearchService webSearchService;
+    private final AuthUserRepository authUserRepository;
+
+    /**
+     * Helper method to get user ID from Principal (email)
+     */
+    private UUID getUserIdFromPrincipal(Principal principal) {
+        if (principal == null) {
+            throw new RuntimeException("Authentication required");
+        }
+        String email = principal.getName();
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Invalid authentication token");
+        }
+        AuthUser user = authUserRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        return user.getId();
+    }
 
     @PostMapping
     @Operation(
@@ -48,25 +70,38 @@ public class WebSearchController {
             @Valid
                     @RequestBody
                     @Parameter(description = "Search parameters including query terms, domain, and batch size")
-                    WebSearchRequestDTO request) {
+                    WebSearchRequestDTO request,
+            Principal principal) {
         try {
+            if (principal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Authentication required", null));
+            }
+
             log.info(
-                    "Initiating web search with query terms: {}, domain: {}, batch size: {}",
+                    "Initiating web search with query terms: {}, domain: {}, batch size: {}, user: {}",
                     request.queryTerms(),
                     request.domain(),
-                    request.batchSize());
+                    request.batchSize(),
+                    principal.getName());
 
-            WebSearchResponseDto response = webSearchService.initiateWebSearch(request);
+            UUID userId = getUserIdFromPrincipal(principal);
+            WebSearchResponseDto response = webSearchService.initiateWebSearch(request, userId);
 
             return ResponseEntity.ok(APIResponse.success(
                     HttpStatus.OK.value(),
                     "Web search initiated successfully. Use the correlation ID to retrieve results.",
                     response));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Error initiating web search: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(APIResponse.error(
                             HttpStatus.BAD_REQUEST.value(), "Failed to initiate web search: " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("Unexpected error initiating web search: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to initiate web search", null));
         }
     }
 

@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -22,28 +23,31 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @AutoConfigureAfter(HibernateJpaAutoConfiguration.class)
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        basePackages = "dev.project.scholar_ai.repository.core",
+        basePackages = {"dev.project.scholar_ai.repository.core", "dev.project.scholar_ai.repository.qa"},
         entityManagerFactoryRef = "entityManagerFactory",
         transactionManagerRef = "transactionManager")
 public class CoreDataSourceConfig {
 
+    @Primary
     @Bean
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties coreDataSourceProperties() {
         return new DataSourceProperties();
     }
 
+    @Primary
     @Bean
     public DataSource dataSource() {
         return coreDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
+    @Primary
     @Bean(name = "entityManagerFactory")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Qualifier("dataSource") DataSource dataSource) {
 
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setDataSource(dataSource);
-        factory.setPackagesToScan("dev.project.scholar_ai.model.core");
+        factory.setPackagesToScan("dev.project.scholar_ai.model.core", "dev.project.scholar_ai.model.qa");
         factory.setPersistenceUnitName("core");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -64,6 +68,7 @@ public class CoreDataSourceConfig {
         return factory;
     }
 
+    @Primary
     @Bean(name = "transactionManager")
     public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);

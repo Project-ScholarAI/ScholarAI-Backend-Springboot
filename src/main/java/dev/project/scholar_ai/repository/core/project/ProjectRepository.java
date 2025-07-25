@@ -23,4 +23,12 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     @Query("SELECT COUNT(p) FROM Project p WHERE p.userId = :userId AND p.status = :status")
     long countByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") Project.Status status);
+
+    @Query(
+            "SELECT p FROM Project p WHERE p.id IN (SELECT pc.projectId FROM ProjectCollaborator pc WHERE pc.collaboratorId = :collaboratorId) ORDER BY p.updatedAt DESC")
+    List<Project> findProjectsByCollaboratorId(@Param("collaboratorId") UUID collaboratorId);
+
+    @Query(
+            "SELECT p FROM Project p WHERE (p.userId = :userId OR p.id IN (SELECT pc.projectId FROM ProjectCollaborator pc WHERE pc.collaboratorId = :userId)) ORDER BY p.updatedAt DESC")
+    List<Project> findProjectsByUserIdOrCollaboratorId(@Param("userId") UUID userId);
 }

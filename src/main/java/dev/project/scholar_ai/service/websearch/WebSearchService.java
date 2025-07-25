@@ -8,7 +8,11 @@ import dev.project.scholar_ai.dto.agent.response.WebSearchResponseDto;
 import dev.project.scholar_ai.dto.event.WebSearchCompletedEvent;
 import dev.project.scholar_ai.dto.paper.metadata.PaperMetadataDto;
 import dev.project.scholar_ai.messaging.publisher.WebSearchRequestSender;
+import dev.project.scholar_ai.model.core.project.Project;
+import dev.project.scholar_ai.model.core.project.ProjectCollaborator;
 import dev.project.scholar_ai.model.core.websearch.WebSearchOperation;
+import dev.project.scholar_ai.repository.core.project.ProjectCollaboratorRepository;
+import dev.project.scholar_ai.repository.core.project.ProjectRepository;
 import dev.project.scholar_ai.repository.core.websearch.WebSearchOperationRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,19 +30,25 @@ public class WebSearchService {
     private final WebSearchRequestSender webSearchRequestSender;
     private final WebSearchOperationRepository webSearchOperationRepository;
     private final PaperPersistenceService paperPersistenceService;
+    private final ProjectRepository projectRepository;
+    private final ProjectCollaboratorRepository projectCollaboratorRepository;
     private final ObjectMapper objectMapper;
 
     @Transactional(transactionManager = "transactionManager")
-    public WebSearchResponseDto initiateWebSearch(WebSearchRequestDTO requestDto) {
+    public WebSearchResponseDto initiateWebSearch(WebSearchRequestDTO requestDto, UUID userId) {
         String correlationId = UUID.randomUUID().toString();
 
         log.info(
-                "Initiating web search - Project ID: {}, Correlation ID: {}, Query: {}, Domain: {}, Batch Size: {}",
+                "Initiating web search - Project ID: {}, Correlation ID: {}, Query: {}, Domain: {}, Batch Size: {}, User: {}",
                 requestDto.projectId(),
                 correlationId,
                 requestDto.queryTerms(),
                 requestDto.domain(),
-                requestDto.batchSize());
+                requestDto.batchSize(),
+                userId);
+
+        // Validate project access
+        validateProjectAccess(requestDto.projectId(), userId);
 
         try {
             // Convert query terms to JSON string
@@ -195,5 +205,27 @@ public class WebSearchService {
                     + (operation.getErrorMessage() != null ? operation.getErrorMessage() : "Unknown error");
             case CANCELLED -> "Web search was cancelled.";
         };
+    }
+
+    /**
+     * Validate that the user has access to the project (owner or collaborator with
+     * EDITOR/ADMIN role)
+     */
+    private void validateProjectAccess(UUID projectId, UUID userId) {
+        // First try to find as owner
+        Project project = projectRepository.findByIdAndUserId(projectId, userId).orElse(null);
+
+        // If not found as owner, check if user is a collaborator with edit permissions
+        if (project == null) {
+            ProjectCollaborator collaboration = projectCollaboratorRepository
+                    .findByProjectIdAndCollaboratorId(projectId, userId)
+                    .orElse(null);
+
+            if (collaboration == null
+                    || (collaboration.getRole() != ProjectCollaborator.CollaborationRole.EDITOR
+                            && collaboration.getRole() != ProjectCollaborator.CollaborationRole.ADMIN)) {
+                throw new RuntimeException("Project not found or access denied");
+            }
+        }
     }
 }

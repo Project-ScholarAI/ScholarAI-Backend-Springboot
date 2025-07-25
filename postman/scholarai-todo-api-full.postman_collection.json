@@ -1,0 +1,229 @@
+{
+  "info": {
+    "name": "ScholarAI - Todo API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Todo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Write research paper\",\n  \"description\": \"Complete the literature review section\",\n  \"priority\": \"high\",\n  \"category\": \"writing\",\n  \"due_date\": \"2025-07-15T10:00:00\",\n  \"estimated_time\": 120,\n  \"related_project_id\": \"project-uuid\",\n  \"tags\": [\n    \"literature\",\n    \"deadline\"\n  ],\n  \"subtasks\": [\n    {\n      \"title\": \"Collect references\"\n    },\n    {\n      \"title\": \"Summarize findings\"\n    }\n  ],\n  \"reminders\": [\n    {\n      \"remind_at\": \"2025-07-14T09:00:00\",\n      \"message\": \"Start writing\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Todo by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Todo",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\",\n  \"priority\": \"medium\",\n  \"category\": \"analysis\",\n  \"due_date\": \"2025-07-20T10:00:00\",\n  \"estimated_time\": 90,\n  \"tags\": [\n    \"update\",\n    \"refactor\"\n  ],\n  \"subtasks\": [\n    {\n      \"title\": \"Update section\"\n    }\n  ],\n  \"reminders\": [\n    {\n      \"remind_at\": \"2025-07-19T09:00:00\",\n      \"message\": \"Check updates\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Todo",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Todo Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"completed\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Todo Summary",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/summary",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "summary"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Filter Todos",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo?status=pending&priority=high",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "pending"
+            },
+            {
+              "key": "priority",
+              "value": "high"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Subtask",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}/subtask?title=Read%20papers",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}",
+            "subtask"
+          ],
+          "query": [
+            {
+              "key": "title",
+              "value": "Read papers"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Toggle Subtask",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/api/v1/todo/{{todo_id}}/subtask/{{subtask_id}}/toggle",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "todo",
+            "{{todo_id}}",
+            "subtask",
+            "{{subtask_id}}",
+            "toggle"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "todo_id",
+      "value": "replace-with-todo-id"
+    }
+  ]
+}

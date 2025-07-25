@@ -6,14 +6,12 @@ import dev.project.scholar_ai.dto.auth.GitHubEmailDTO;
 import dev.project.scholar_ai.dto.auth.GitHubUserDTO;
 import dev.project.scholar_ai.model.core.account.UserAccount;
 import dev.project.scholar_ai.model.core.auth.SocialUser;
-import dev.project.scholar_ai.model.core.auth.UserProvider;
 import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
 import dev.project.scholar_ai.repository.core.auth.SocialUserRepository;
 import dev.project.scholar_ai.repository.core.auth.UserProviderRepository;
 import dev.project.scholar_ai.security.GoogleVerifierUtil;
 import dev.project.scholar_ai.security.JwtUtils;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +35,7 @@ public class SocialAuthService {
     private final RestTemplate restTemplate;
     private final AuthUserRepository authUserRepository;
     private final UserAccountRepository userAccountRepository;
+
     @Value("${spring.github.client-id}")
     private String githubClientId;
 
@@ -58,12 +57,14 @@ public class SocialAuthService {
         String providerId = payload.getSubject();
         String name = (String) payload.get("name");
 
-        if(authUserRepository.findByEmail(email).isPresent())
-            throw new BadCredentialsException("This email is registered with a password. Please log in using email and password.");
+        if (authUserRepository.findByEmail(email).isPresent())
+            throw new BadCredentialsException(
+                    "This email is registered with a password. Please log in using email and password.");
         else if (socialUserRepository.findByEmail(email).isPresent()) {
             SocialUser socialUser = socialUserRepository.findByEmail(email).get();
-            if(socialUser.getProvider().equals("GITHUB"))
-                throw new BadCredentialsException("This "+ email+ " is registered with GitHub. Please log in using GitHub.");
+            if (socialUser.getProvider().equals("GITHUB"))
+                throw new BadCredentialsException(
+                        "This " + email + " is registered with GitHub. Please log in using GitHub.");
         }
 
         if (email == null || email.isEmpty()) {
@@ -118,12 +119,14 @@ public class SocialAuthService {
         String providerId = gitHubUser.getId().toString();
         String name = gitHubUser.getName() != null ? gitHubUser.getName() : gitHubUser.getLogin();
 
-        if(authUserRepository.findByEmail(email).isPresent())
-            throw new BadCredentialsException("This email is registered with a password. Please log in using email and password.");
+        if (authUserRepository.findByEmail(email).isPresent())
+            throw new BadCredentialsException(
+                    "This email is registered with a password. Please log in using email and password.");
         else if (socialUserRepository.findByEmail(email).isPresent()) {
             SocialUser socialUser = socialUserRepository.findByEmail(email).get();
-            if(socialUser.getProvider().equals("GOOGLE"))
-                throw new BadCredentialsException("This "+ email+ " is registered with GitHub. Please log in using GitHub.");
+            if (socialUser.getProvider().equals("GOOGLE"))
+                throw new BadCredentialsException(
+                        "This " + email + " is registered with GitHub. Please log in using GitHub.");
         }
 
         if (email == null || email.isEmpty()) {
@@ -145,7 +148,8 @@ public class SocialAuthService {
         }
 
         // Create or update linked user account
-        UserAccount account = userAccountRepository.findByEmail(socialUser.getEmail()).orElse(null);
+        UserAccount account =
+                userAccountRepository.findByEmail(socialUser.getEmail()).orElse(null);
 
         if (account == null) {
             account = new UserAccount();

@@ -50,20 +50,28 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/test/test",
                                 "/api/v1/auth/**",
+                                "/api/v1/projects/**",
                                 "/api/v1/auth/social/**",
                                 "/api/v1/websearch/**",
+                                "/api/v1/library/**",
                                 "/actuator/**",
                                 "/docs",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**")
+                                "/v3/api-docs/**",
+                                // Paper-related endpoints (includes extraction, QA, structuring)
+                                "/api/papers/**",
+                                "/api/test/extraction/**",
+                                // QA and structuring endpoints
+                                "/api/v1/qa/**",
+                                "/api/v1/structuring/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/**", "/api/papers/**", "/api/test/extraction/**"))
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -30,7 +30,7 @@ public class Author {
     @Column(length = 50)
     private String orcid;
 
-    @Column(length = 300)
+    @Column(length = 1000)
     private String affiliation;
 
     @ManyToOne(fetch = FetchType.LAZY)
