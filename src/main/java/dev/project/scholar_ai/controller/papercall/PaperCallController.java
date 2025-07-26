@@ -91,12 +91,12 @@ public class PaperCallController {
     @PostMapping("/all")
     public ResponseEntity<List<PaperCallResponse>> getAllCallsByUser(Principal principal) {
         try {
-            log.info("📥 paper call all endpoint hit");
-            log.info("🔍 Principal: {}", principal);
-            log.info("🔍 Principal name: {}", principal != null ? principal.getName() : "null");
+            log.info("paper call all endpoint hit");
+            log.info("Principal: {}", principal);
+            log.info("Principal name: {}", principal != null ? principal.getName() : "null");
 
             UUID userId = getUserIdFromPrincipal(principal);
-            log.info("✅ User ID from all endpoint: {}", userId);
+            log.info("User ID from all endpoint: {}", userId);
 
             List<PaperCallResponse> calls = paperCallService.getAllCallsByUser(userId);
             log.info("✅ All call size in endpoint: {}", calls.size());
