@@ -3,10 +3,8 @@ package dev.project.scholar_ai.security;
 import javax.sql.DataSource;
 
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -50,7 +48,6 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource)) // ✅ explicitly configure CORS source
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ✅ allow all preflight OPTIONS requests
                         .requestMatchers(
                                 "/api/test/test",
                                 "/api/v1/auth/**",
