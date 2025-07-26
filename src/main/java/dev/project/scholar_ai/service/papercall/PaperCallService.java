@@ -31,44 +31,56 @@ public class PaperCallService {
     @Value("${external.papercall.api.base-url}")
     private String baseApiUrl;
 
-    public void syncCallsFromFastAPI(UUID userId, String domain) {
+    public List<PaperCallResponse> syncCallsFromFastAPI(UUID userId, String domain) {
         String url = baseApiUrl + "/calls?domain=" + domain;
-        log.info("Sync is called in paper-call-service", url) ;
+        log.info("🔄 Sync is called in paper-call-service: {}", url);
+
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
         try {
             List<PaperCallResponse> calls = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
             List<PaperCall> newEntities = new ArrayList<>();
 
             for (PaperCallResponse dto : calls) {
                 boolean exists = paperCallRepository.existsByUserIdAndTitleAndLink(userId, dto.getTitle(), dto.getLink());
                 if (!exists) {
                     PaperCall entity = PaperCall.builder()
-                            .userId(userId) // ✅ assuming you have the user object
+                            .userId(userId)
                             .title(dto.getTitle())
                             .link(dto.getLink())
                             .type(dto.getType())
                             .source(dto.getSource())
-                            .domain(domain) // ✅ pass domain from query input or context
-                            .whenHeld(dto.getWhenHeld()) // can be null
-                            .whereHeld(dto.getWhereHeld()) // can be null
-                            .deadline(dto.getDeadline()) // can be null
-                            .description(dto.getDescription()) // can be null
-                            .createdAt(LocalDateTime.now()) // will also be set in @PrePersist, but safer here
-                            .updatedAt(LocalDateTime.now()) // will also be set in @PreUpdate
+                            .domain(domain)
+                            .whenHeld(dto.getWhenHeld())
+                            .whereHeld(dto.getWhereHeld())
+                            .deadline(dto.getDeadline())
+                            .description(dto.getDescription())
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
                             .build();
                     newEntities.add(entity);
                 }
             }
 
-            paperCallRepository.saveAll(newEntities);
-            log.info("✅ Synced {} new paper calls for user {}", newEntities.size(), userId);
+            if (!newEntities.isEmpty()) {
+                paperCallRepository.saveAll(newEntities);
+                log.info("✅ Synced {} new paper calls for user {}", newEntities.size(), userId);
+            } else {
+                log.info("ℹ️ No new calls to sync for user {}", userId);
+            }
+
+            // ✅ Return ALL items (not just newly added)
+            List<PaperCall> allCalls = paperCallRepository.findByUserIdAndDomain(userId, domain);
+            log.info("here returned sync paper calls ,", calls.size());
+            log.info(calls.toString());
+            return allCalls.stream().map(this::mapToDto).collect(Collectors.toList());
+
         } catch (Exception e) {
-            log.error("Error parsing or saving paper calls", e);
+            log.error("❌ Error parsing or saving paper calls", e);
             throw new RuntimeException("Failed to sync paper calls", e);
         }
     }
+
 
     public Page<PaperCallResponse> filterPaperCalls(UUID userId, String source, String type, String domain,
                                                     String searchTerm, LocalDate deadlineFrom, LocalDate deadlineTo,
@@ -107,6 +119,15 @@ public class PaperCallService {
                 .timestamp(LocalDateTime.now().toString())
                 .build();
     }
+
+    public List<PaperCallResponse> getAllCallsByUser(UUID userId) {
+        log.info("get all for paper call hitted in service for userId", userId);
+        List<PaperCall> calls = paperCallRepository.findByUserId(userId);
+        log.info("all calls size", calls.size());
+        log.info("calls:", calls);
+        return calls.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
 
 
     private PaperCallResponse mapToDto(PaperCall call) {

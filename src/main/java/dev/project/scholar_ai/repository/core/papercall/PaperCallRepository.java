@@ -17,6 +17,7 @@ import java.util.UUID;
 public interface PaperCallRepository extends JpaRepository<PaperCall, UUID> {
 
     boolean existsByUserIdAndTitleAndLink(UUID userId, String title, String link);
+    List<PaperCall> findByUserId(UUID userId);
 
     @Query("SELECT pc FROM PaperCall pc WHERE pc.userId = :userId " +
             "AND (:domain IS NULL OR pc.domain ILIKE %:domain%) " +
