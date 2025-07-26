@@ -51,69 +51,6 @@ public class SocialAuthService {
     @Value("${spring.github.redirect-uri}")
     private String githubRedirectUri;
 
-    // login by google
-//    public AuthResponse loginWithGoogle(String idTokenString) {
-//        GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
-//
-//        if (payload == null) {
-//            throw new BadCredentialsException("Invalid Google ID token");
-//        }
-//
-//        String email = payload.getEmail();
-//        String providerId = payload.getSubject();
-//        String name = (String) payload.get("name");
-//
-//        if (authUserRepository.findByEmail(email).isPresent())
-//            throw new BadCredentialsException(
-//                    "This email is registered with a password. Please log in using email and password.");
-//        else if (socialUserRepository.findByEmail(email).isPresent()) {
-//            SocialUser socialUser = socialUserRepository.findByEmail(email).get();
-//            if (socialUser.getProvider().equals("GITHUB"))
-//                throw new BadCredentialsException(
-//                        "This " + email + " is registered with GitHub. Please log in using GitHub.");
-//        }
-//
-//        if (email == null || email.isEmpty()) {
-//            throw new IllegalArgumentException("Email not found in Google ID token payload.");
-//        }
-//
-//        SocialUser user = socialUserRepository.findByEmail(email).orElseGet(() -> {
-//            SocialUser newUser = new SocialUser();
-//            newUser.setEmail(email);
-//            newUser.setName(name);
-//            newUser.setRole("USER");
-//            newUser.setProvider("GOOGLE");
-//            return socialUserRepository.save(newUser);
-//        });
-//
-//        if (name != null && !name.equals(user.getName())) {
-//            user.setName(name);
-//            socialUserRepository.save(user);
-//        }
-//
-//        // Create or update linked user account
-//        UserAccount account = userAccountRepository.findByEmail(user.getEmail()).orElse(null);
-//
-//        if (account == null) {
-//            account = new UserAccount();
-//            account.setId(user.getId());
-//            account.setEmail(user.getEmail());
-//            account.setCreatedAt(Instant.now());
-//        }
-//
-//        account.setUpdatedAt(Instant.now());
-//        userAccountRepository.save(account);
-//
-//        // Generate tokens
-//        String accessToken = jwtUtils.generateAccessToken(user.getEmail());
-//        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
-//        refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
-//
-//        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
-//    }
-
-
-    //new
     public AuthResponse loginWithGoogle(String idTokenString) {
         GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
 
