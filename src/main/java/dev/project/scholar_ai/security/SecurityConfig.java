@@ -1,9 +1,10 @@
 package dev.project.scholar_ai.security;
 
-import static org.springframework.security.config.Customizer.withDefaults;
 
 import javax.sql.DataSource;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
  * Security configuration class for the application.
@@ -32,6 +34,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final AuthEntryPointJwt unauthorizedHandler;
     private final AuthTokenFilter authTokenFilter; // 👈 inject AuthTokenFilter here properly
+    private final CorsConfigurationSource corsConfigurationSource; // 👈 inject CorsConfigurationSource
 
     /**
      * Configures the default security filter chain.
@@ -45,7 +48,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(withDefaults()) // Enable CORS here
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource)) // ✅ explicitly configure CORS source
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(
                                 "/api/test/test",
