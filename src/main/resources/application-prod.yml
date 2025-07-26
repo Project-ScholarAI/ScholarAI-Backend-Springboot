@@ -73,7 +73,7 @@ spring:
   github:
     client-id: ${SPRING_GITHUB_CLIENT_ID}
     client-secret: ${SPRING_GITHUB_CLIENT_SECRET}
-    redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:3000/callback}
+    redirect-uri: ${GITHUB_REDIRECT_URI:http://4.247.29.26:3000/callback}
 
   sendgrid:
     api-key: ${SENDGRID_API_KEY}
@@ -81,12 +81,14 @@ spring:
     template-id: ${SENDGRID_TEMPLATE_ID}    
 
 server:
+  address: 0.0.0.0
   port: 8080
   error:
     include-message: always
     include-binding-errors: always
     include-stacktrace: never
     include-exception: false
+
 
 management:
   info:
@@ -175,7 +177,7 @@ scholarai:
       completed-routing-key: scholarai.gap.completed
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://scholarAI.tech,https://*.vercel.app}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://4.247.29.26:3000}
 
 logging:
   level:
