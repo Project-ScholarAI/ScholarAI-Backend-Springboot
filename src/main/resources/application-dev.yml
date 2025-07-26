@@ -169,7 +169,7 @@ scholarai:
       completed-routing-key: scholarai.gap.completed
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://scholarAI.tech,https://*.vercel.app}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://4.247.29.26:3000}
 
 logging:
   level:
