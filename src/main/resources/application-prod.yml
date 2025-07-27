@@ -83,7 +83,7 @@ spring:
 external:
   papercall:
     api:
-      base-url: ${FASTAPI_BASE_URL:http://docker-websearch-app-1:8000}/api/v1/papercall
+      base-url: http://4.247.29.26:8000/api/v1/papercall
 
 server:
   address: 0.0.0.0
