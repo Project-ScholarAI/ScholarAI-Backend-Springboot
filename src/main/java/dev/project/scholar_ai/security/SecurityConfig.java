@@ -1,7 +1,6 @@
 package dev.project.scholar_ai.security;
 
 import javax.sql.DataSource;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

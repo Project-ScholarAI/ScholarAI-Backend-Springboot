@@ -74,6 +74,38 @@ public class LibraryService {
                 papers);
     }
 
+    @Transactional(readOnly = true, transactionManager = "paperTransactionManager")
+    public List<PaperMetadataDto> getLatestProjectPapers(UUID projectId, UUID userId) {
+        log.info("Retrieving latest papers for project: {} by user: {}", projectId, userId);
+
+        // Validate project access
+        validateProjectAccess(projectId, userId);
+
+        // Get all web search operations for this project, ordered by submission date (latest first)
+        List<WebSearchOperation> searchOperations =
+                webSearchOperationRepository.findByProjectIdOrderBySubmittedAtDesc(projectId);
+
+        if (searchOperations.isEmpty()) {
+            log.debug("No search operations found for project {}", projectId);
+            return List.of();
+        }
+
+        // Get the latest correlation ID (first in the list since it's ordered by submittedAt DESC)
+        String latestCorrelationId = searchOperations.get(0).getCorrelationId();
+        log.debug("Latest correlation ID for project {}: {}", projectId, latestCorrelationId);
+
+        // Get papers for the latest correlation ID
+        List<PaperMetadataDto> latestPapers = paperPersistenceService.findPaperDtosByCorrelationId(latestCorrelationId);
+
+        log.info(
+                "Retrieved {} papers from latest correlation ID {} for project {}",
+                latestPapers.size(),
+                latestCorrelationId,
+                projectId);
+
+        return latestPapers;
+    }
+
     private LibraryResponseDto createEmptyLibraryResponse(UUID projectId) {
         return new LibraryResponseDto(
                 projectId.toString(),

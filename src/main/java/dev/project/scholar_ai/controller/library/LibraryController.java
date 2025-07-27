@@ -148,6 +148,57 @@ public class LibraryController {
         }
     }
 
+    @GetMapping("/project/{projectId}/latest")
+    @Operation(
+            summary = "📄 Get Latest Papers from Project",
+            description = "Retrieve all papers from the most recent search operation (latest correlation ID) "
+                    + "for a specific project. This endpoint returns papers from the most recent web search "
+                    + "or uploaded paper operation, ordered by submission date.")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Latest papers retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = APIResponse.class))),
+                @ApiResponse(responseCode = "404", description = "Project not found or no papers available")
+            })
+    public ResponseEntity<APIResponse<List<PaperMetadataDto>>> getLatestProjectPapers(
+            @PathVariable
+                    @Parameter(
+                            description = "Project ID to retrieve latest papers for",
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    UUID projectId,
+            Principal principal) {
+        try {
+            if (principal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(APIResponse.error(HttpStatus.UNAUTHORIZED.value(), "Authentication required", null));
+            }
+
+            log.info("Get latest project papers {} endpoint hit by user: {}", projectId, principal.getName());
+
+            UUID userId = getUserIdFromPrincipal(principal);
+            List<PaperMetadataDto> latestPapers = libraryService.getLatestProjectPapers(projectId, userId);
+
+            String message = String.format(
+                    "Retrieved %d papers from the latest search operation for project %s",
+                    latestPapers.size(), projectId);
+
+            return ResponseEntity.ok(APIResponse.success(HttpStatus.OK.value(), message, latestPapers));
+        } catch (RuntimeException e) {
+            log.error("Error retrieving latest papers for project {}: {}", projectId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(APIResponse.error(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("Unexpected error retrieving latest papers for project {}: {}", projectId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(APIResponse.error(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to retrieve latest project papers",
+                            null));
+        }
+    }
+
     @GetMapping("/project/{projectId}/stats")
     @Operation(
             summary = "📊 Get Project Library Statistics",
