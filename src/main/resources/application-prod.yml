@@ -80,6 +80,11 @@ spring:
     from-email: ${SENDGRID_FROM_EMAIL}
     template-id: ${SENDGRID_TEMPLATE_ID}    
 
+external:
+  papercall:
+    api:
+      base-url: ${FASTAPI_BASE_URL:http://docker-websearch-app-1:8000}/api/v1/papercall
+
 server:
   address: 0.0.0.0
   port: 8080
