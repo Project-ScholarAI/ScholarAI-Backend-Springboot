@@ -28,11 +28,11 @@ public class PaperCallService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${external.papercall.api.base-url}")
+    @Value("${scholarai.fastapi.base-url:http://localhost:8000}")
     private String baseApiUrl;
 
     public List<PaperCallResponse> syncCallsFromFastAPI(UUID userId, String domain) {
-        String url = baseApiUrl + "/calls?domain=" + domain;
+        String url = baseApiUrl + "/api/v1/papercall/calls?domain=" + domain;
         log.info("🔄 Sync is called in paper-call-service: {}", url);
 
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
