@@ -74,6 +74,13 @@ spring:
     from-email: ${SENDGRID_FROM_EMAIL}
     template-id: ${SENDGRID_TEMPLATE_ID}
 
+# FastAPI integration for paper calls
+external:
+  papercall:
+    api:
+      base-url: http://localhost:8000/api/v1/papercall
+
+
 server:
   port: 8080
   error:

@@ -32,8 +32,7 @@ jobs:
         ./scripts/docker.sh stop || true
 
         echo "Building and starting Spring Boot API..."
-        ./scripts/docker.sh build
-        ./scripts/docker.sh start
+        ./scripts/docker.sh rebuild-nocache
 
         echo "Spring Boot API deployment completed!"
         EOF

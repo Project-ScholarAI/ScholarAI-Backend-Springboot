@@ -5,6 +5,7 @@ import dev.project.scholar_ai.dto.auth.AuthResponse;
 import dev.project.scholar_ai.dto.auth.GitHubEmailDTO;
 import dev.project.scholar_ai.dto.auth.GitHubUserDTO;
 import dev.project.scholar_ai.model.core.account.UserAccount;
+import dev.project.scholar_ai.model.core.auth.AuthUser;
 import dev.project.scholar_ai.model.core.auth.SocialUser;
 import dev.project.scholar_ai.repository.core.account.UserAccountRepository;
 import dev.project.scholar_ai.repository.core.auth.AuthUserRepository;
@@ -15,10 +16,13 @@ import dev.project.scholar_ai.security.JwtUtils;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -35,6 +39,8 @@ public class SocialAuthService {
     private final RestTemplate restTemplate;
     private final AuthUserRepository authUserRepository;
     private final UserAccountRepository userAccountRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Value("${spring.github.client-id}")
     private String githubClientId;
@@ -45,7 +51,6 @@ public class SocialAuthService {
     @Value("${spring.github.redirect-uri}")
     private String githubRedirectUri;
 
-    // login by google
     public AuthResponse loginWithGoogle(String idTokenString) {
         GoogleIdToken.Payload payload = googleVerifierUtil.verify(idTokenString);
 
@@ -57,41 +62,41 @@ public class SocialAuthService {
         String providerId = payload.getSubject();
         String name = (String) payload.get("name");
 
-        if (authUserRepository.findByEmail(email).isPresent())
-            throw new BadCredentialsException(
-                    "This email is registered with a password. Please log in using email and password.");
-        else if (socialUserRepository.findByEmail(email).isPresent()) {
-            SocialUser socialUser = socialUserRepository.findByEmail(email).get();
-            if (socialUser.getProvider().equals("GITHUB"))
-                throw new BadCredentialsException(
-                        "This " + email + " is registered with GitHub. Please log in using GitHub.");
-        }
-
         if (email == null || email.isEmpty()) {
             throw new IllegalArgumentException("Email not found in Google ID token payload.");
         }
 
-        SocialUser user = socialUserRepository.findByEmail(email).orElseGet(() -> {
-            SocialUser newUser = new SocialUser();
-            newUser.setEmail(email);
-            newUser.setName(name);
-            newUser.setRole("USER");
-            newUser.setProvider("GOOGLE");
-            return socialUserRepository.save(newUser);
-        });
-
-        if (name != null && !name.equals(user.getName())) {
-            user.setName(name);
-            socialUserRepository.save(user);
+        if (authUserRepository.findByEmail(email).isPresent())
+        {
+            AuthUser authUser = authUserRepository.findByEmail(email).get();
+            if(authUser.getProvider().equalsIgnoreCase("PASSWORD_USER"))
+                throw new BadCredentialsException(
+                        "This email is registered with a password. Please log in using email and password.");
+            else if(authUser.getProvider().equalsIgnoreCase("GITHUB_USER"))
+                throw new BadCredentialsException(
+                        "This " + email + " is already registered with GitHub!");
+            else if(authUser.getProvider().equalsIgnoreCase("GOOGLE_USER")){
+                return buildTokensForUser(authUser);
+            }
         }
 
+
+        String randomPassword = UUID.randomUUID().toString(); // generates something like "9f1f0c4a-7bfb-4ebd-8a5e-52c893b7d2c0"
+        String encodedPassword = passwordEncoder.encode(randomPassword);
+        AuthUser newUser = new AuthUser();
+        newUser.setEmail(email);
+        newUser.setEncryptedPassword(encodedPassword);
+        newUser.setRole("USER");
+        newUser.setProvider("GOOGLE_USER"); // Default role
+        AuthUser savedUser = authUserRepository.save(newUser);
+
         // Create or update linked user account
-        UserAccount account = userAccountRepository.findByEmail(user.getEmail()).orElse(null);
+        UserAccount account = userAccountRepository.findByEmail(savedUser.getEmail()).orElse(null);
 
         if (account == null) {
             account = new UserAccount();
-            account.setId(user.getId());
-            account.setEmail(user.getEmail());
+            account.setId(savedUser.getId());
+            account.setEmail(savedUser.getEmail());
             account.setCreatedAt(Instant.now());
         }
 
@@ -99,11 +104,11 @@ public class SocialAuthService {
         userAccountRepository.save(account);
 
         // Generate tokens
-        String accessToken = jwtUtils.generateAccessToken(user.getEmail());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
-        refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
+        String accessToken = jwtUtils.generateAccessToken(savedUser.getEmail());
+        String refreshToken = jwtUtils.generateRefreshToken(savedUser.getEmail());
+        refreshTokenService.saveRefreshToken(savedUser.getEmail(), refreshToken);
 
-        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
+        return new AuthResponse(accessToken, refreshToken, savedUser.getEmail(), savedUser.getId(), List.of(savedUser.getRole()));
     }
 
     // login with github
@@ -119,42 +124,42 @@ public class SocialAuthService {
         String providerId = gitHubUser.getId().toString();
         String name = gitHubUser.getName() != null ? gitHubUser.getName() : gitHubUser.getLogin();
 
-        if (authUserRepository.findByEmail(email).isPresent())
-            throw new BadCredentialsException(
-                    "This email is registered with a password. Please log in using email and password.");
-        else if (socialUserRepository.findByEmail(email).isPresent()) {
-            SocialUser socialUser = socialUserRepository.findByEmail(email).get();
-            if (socialUser.getProvider().equals("GOOGLE"))
-                throw new BadCredentialsException(
-                        "This " + email + " is registered with GitHub. Please log in using GitHub.");
-        }
-
         if (email == null || email.isEmpty()) {
             throw new IllegalArgumentException("Email not found in Github user profile");
         }
 
-        SocialUser socialUser = socialUserRepository.findByEmail(email).orElseGet(() -> {
-            SocialUser newUser = new SocialUser();
-            newUser.setEmail(email);
-            newUser.setName(name);
-            newUser.setRole("USER");
-            newUser.setProvider("GITHUB");
-            return socialUserRepository.save(newUser);
-        });
+        if (authUserRepository.findByEmail(email).isPresent()){
+            AuthUser socialUser = authUserRepository.findByEmail(email).get();
+            if(socialUser.getProvider().equalsIgnoreCase("PASSWORD_USER"))
+                throw new BadCredentialsException(
+                        "This email is already registered with a password!");
+            else if (socialUser.getProvider().equalsIgnoreCase("GOOGLE_USER")) {
+            throw new BadCredentialsException(
+                    "This " + email + " is already registered with Google.");
+            }
+            else if(socialUser.getProvider().equalsIgnoreCase("GITHUB_USER")){
+                return buildTokensForUser(socialUser);
+            }
+            }
 
-        if (name != null && !name.equals(socialUser.getName())) {
-            socialUser.setName(name);
-            socialUserRepository.save(socialUser);
-        }
+        String randomPassword = UUID.randomUUID().toString(); // generates something like "9f1f0c4a-7bfb-4ebd-8a5e-52c893b7d2c0"
+        String encodedPassword = passwordEncoder.encode(randomPassword);
+
+        AuthUser newUser = new AuthUser();
+        newUser.setEmail(email);
+        newUser.setEncryptedPassword(encodedPassword);
+        newUser.setRole("USER");
+        newUser.setProvider("GITHUB_USER"); // Default role
+        AuthUser savedUser = authUserRepository.save(newUser);
 
         // Create or update linked user account
         UserAccount account =
-                userAccountRepository.findByEmail(socialUser.getEmail()).orElse(null);
+                userAccountRepository.findByEmail(savedUser.getEmail()).orElse(null);
 
         if (account == null) {
             account = new UserAccount();
-            account.setId(socialUser.getId());
-            account.setEmail(socialUser.getEmail());
+            account.setId(savedUser.getId());
+            account.setEmail(savedUser.getEmail());
             account.setCreatedAt(Instant.now());
         }
 
@@ -162,16 +167,16 @@ public class SocialAuthService {
         userAccountRepository.save(account);
 
         // Generate tokens
-        String jwtAccessToken = jwtUtils.generateAccessToken(socialUser.getEmail());
-        String jwtRefreshToken = jwtUtils.generateRefreshToken(socialUser.getEmail());
-        refreshTokenService.saveRefreshToken(socialUser.getEmail(), jwtRefreshToken);
+        String jwtAccessToken = jwtUtils.generateAccessToken(savedUser.getEmail());
+        String jwtRefreshToken = jwtUtils.generateRefreshToken(savedUser.getEmail());
+        refreshTokenService.saveRefreshToken(savedUser.getEmail(), jwtRefreshToken);
 
         return new AuthResponse(
                 jwtAccessToken,
                 jwtRefreshToken,
-                socialUser.getEmail(),
-                socialUser.getId(),
-                List.of(socialUser.getRole()));
+                savedUser.getEmail(),
+                savedUser.getId(),
+                List.of(savedUser.getRole()));
     }
 
     // exchange code for access token
@@ -233,4 +238,24 @@ public class SocialAuthService {
 
         return userDTO;
     }
+
+    private AuthResponse buildTokensForUser(AuthUser user) {
+        String accessToken = jwtUtils.generateAccessToken(user.getEmail());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
+        refreshTokenService.saveRefreshToken(user.getEmail(), refreshToken);
+
+        // ensure user account exists
+        UserAccount account = userAccountRepository.findByEmail(user.getEmail()).orElseGet(() -> {
+            UserAccount acc = new UserAccount();
+            acc.setId(user.getId());
+            acc.setEmail(user.getEmail());
+            acc.setCreatedAt(Instant.now());
+            return acc;
+        });
+        account.setUpdatedAt(Instant.now());
+        userAccountRepository.save(account);
+
+        return new AuthResponse(accessToken, refreshToken, user.getEmail(), user.getId(), List.of(user.getRole()));
+    }
+
 }

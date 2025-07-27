@@ -64,6 +64,7 @@ public class AuthService {
         newUser.setEmail(email);
         newUser.setEncryptedPassword(passwordEncoder.encode(password));
         newUser.setRole("USER"); // Default role
+        newUser.setProvider("PASSWORD_USER");
         AuthUser savedUser = authUserRepository.save(newUser);
 
         // Create linked user account
