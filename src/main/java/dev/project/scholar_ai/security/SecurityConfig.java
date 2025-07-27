@@ -53,6 +53,7 @@ public class SecurityConfig {
                                 "/api/v1/projects/**",
                                 "/api/v1/auth/social/**",
                                 "/api/v1/websearch/**",
+                                "/api/v1/papercall/**",
                                 "/api/v1/library/**",
                                 "/actuator/**",
                                 "/docs",
