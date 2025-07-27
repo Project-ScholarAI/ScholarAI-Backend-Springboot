@@ -43,4 +43,7 @@ public class AuthUser {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(length = 255)
+    private String provider;
 }

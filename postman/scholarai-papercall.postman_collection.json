@@ -1,0 +1,82 @@
+{
+	"info": {
+		"name": "ScholarAI - PaperCall API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_postman_id": "b16896cf-3fae-4121-889f-9eac123456789"
+	},
+	"item": [
+		{
+			"name": "Sync Paper Calls from FastAPI",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/papercall/sync?domain=machine learning",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "v1", "papercall", "sync"],
+					"query": [
+						{ "key": "domain", "value": "machine learning" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Filter Paper Calls",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/papercall/filter?source=MDPI&type=journal&domain=machine learning&deadlineFrom=2025-07-01&deadlineTo=2025-08-01&page=0&size=10&sortBy=createdAt&sortDir=desc",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "v1", "papercall", "filter"],
+					"query": [
+						{ "key": "source", "value": "MDPI" },
+						{ "key": "type", "value": "journal" },
+						{ "key": "domain", "value": "machine learning" },
+						{ "key": "deadlineFrom", "value": "2025-07-01" },
+						{ "key": "deadlineTo", "value": "2025-08-01" },
+						{ "key": "page", "value": "0" },
+						{ "key": "size", "value": "10" },
+						{ "key": "sortBy", "value": "createdAt" },
+						{ "key": "sortDir", "value": "desc" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Paper Call Statistics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/papercall/statistics?domain=machine learning",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "v1", "papercall", "statistics"],
+					"query": [
+						{ "key": "domain", "value": "machine learning" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/papercall/health",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "v1", "papercall", "health"]
+				}
+			}
+		}
+	]
+}
