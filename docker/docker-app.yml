@@ -1,3 +1,4 @@
+### ✅ Modified `docker-compose.yml` snippet for `core-app`
 services:
   core-app:
     build:
@@ -15,9 +16,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 768M
         reservations:
-          memory: 256M
+          memory: 512M
     restart: unless-stopped
     networks:
       - scholar_network_alias
@@ -29,6 +30,4 @@ services:
 networks:
   scholar_network_alias:
     name: docker_scholar-network
-    external: true        
-
-
+    external: true
