@@ -1,4 +1,22 @@
-### ✅ Modified `Dockerfile` (with improved JVM memory handling)
+###############################################################################
+# 1️⃣  Dependency-cache stage
+###############################################################################
+FROM maven:3.9-amazoncorretto-21-alpine AS deps
+WORKDIR /app
+COPY pom.xml ./
+RUN --mount=type=cache,target=/root/.m2 mvn -B -ntp dependency:go-offline
+
+###############################################################################
+# 2️⃣  Build & test stage
+###############################################################################
+FROM deps AS build
+COPY src ./src
+RUN --mount=type=cache,target=/root/.m2 \
+  mvn -B -ntp spotless:apply verify -DskipITs=false
+
+###############################################################################
+# 3️⃣  Runtime stage (JVM tuned)
+###############################################################################
 FROM amazoncorretto:21-alpine AS runtime
 
 # Non-root user
@@ -10,7 +28,7 @@ WORKDIR /app
 ARG ENV
 ENV SPRING_PROFILES_ACTIVE=$ENV
 
-# ---- Required tools ----
+# Required tools
 RUN apk add --no-cache curl
 
 # App + config
@@ -25,7 +43,7 @@ USER spring
 HEALTHCHECK --start-period=30s --interval=30s --timeout=3s --retries=3 \
   CMD ["curl", "--fail", "http://localhost:8080/actuator/health"]
 
-# JVM memory tuning + Container Awareness
+# JVM tuning
 ENTRYPOINT ["java", \
   "-XX:+UseContainerSupport", \
   "-XX:+AlwaysPreTouch", \

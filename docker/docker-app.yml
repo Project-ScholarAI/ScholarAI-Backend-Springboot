@@ -1,4 +1,3 @@
-### ✅ Modified `docker-compose.yml` snippet for `core-app`
 services:
   core-app:
     build:
